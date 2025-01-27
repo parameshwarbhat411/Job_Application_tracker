@@ -73,7 +73,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <motion.header 
+      <motion.header
         className="border-b bg-background/50 backdrop-blur-sm"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -93,7 +93,7 @@ export default function Dashboard() {
         </div>
       </motion.header>
 
-      <motion.main 
+      <motion.main
         className="container mx-auto px-4 py-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -101,7 +101,7 @@ export default function Dashboard() {
       >
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
-            <motion.h2 
+            <motion.h2
               className="text-xl font-semibold"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -128,8 +128,8 @@ export default function Dashboard() {
             </Dialog>
           </div>
 
-          <Tabs 
-            defaultValue="list" 
+          <Tabs
+            defaultValue="list"
             className="space-y-4"
             value={activeTab}
             onValueChange={paginate}
@@ -156,14 +156,15 @@ export default function Dashboard() {
                   animate="animate"
                   exit="exit"
                   transition={{
-                    x: { type: "spring", stiffness: 60, damping: 15 },
-                    opacity: { duration: 0.25 },
-                    scale: { duration: 0.25 }
+                    x: { type: "spring", stiffness: 70, damping: 12 },
+                    opacity: { duration: 0.2 },
+                    scale: { duration: 0.2 }
                   }}
                   style={{
                     position: 'absolute',
                     width: '100%',
-                    height: '100%',
+                    height: 'auto',
+                    minHeight: '100%',
                     left: 0,
                     right: 0,
                     willChange: 'transform, opacity',
