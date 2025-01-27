@@ -9,12 +9,17 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
@@ -23,6 +28,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { Job } from "@db/schema";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { searchCompanies, searchJobTitles } from "@/lib/api";
+import { useDebounce } from "@/hooks/use-debounce";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 const statusOptions = ["Not Started", "In Progress", "Completed", "Rejected"] as const;
 
@@ -54,21 +66,32 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const [jobTitleOpen, setJobTitleOpen] = useState(false);
+  const [companySearch, setCompanySearch] = useState("");
+  const [jobTitleSearch, setJobTitleSearch] = useState("");
+  const [companies, setCompanies] = useState<Array<{ word: string; score: number }>>([]);
+  const [jobTitles, setJobTitles] = useState<Array<{ title: string; code: string }>>([]);
+  const [isLoadingCompanies, setIsLoadingCompanies] = useState(false);
+  const [isLoadingJobTitles, setIsLoadingJobTitles] = useState(false);
+
+  const debouncedCompanySearch = useDebounce(companySearch, 300);
+  const debouncedJobTitleSearch = useDebounce(jobTitleSearch, 300);
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: job ? {
       ...job,
       currentDate: new Date().toISOString().split("T")[0],
-      applicationDate: job.applicationDate ? new Date(job.applicationDate).toISOString().split("T")[0] : null,
+      applicationDate: job.applicationDate ? new Date(job.applicationDate).toISOString().split("T")[0] : undefined,
       location: job.location || "",
-      salaryMin: job.salaryMin || "",
-      salaryMax: job.salaryMax || "",
+      salaryMin: job.salaryMin?.toString() || "",
+      salaryMax: job.salaryMax?.toString() || "",
       notes: job.notes || "",
-      interviewDate: job.interviewDate ? new Date(job.interviewDate).toISOString().split("T")[0] : null,
+      interviewDate: job.interviewDate ? new Date(job.interviewDate).toISOString().split("T")[0] : undefined,
     } : {
       currentDate: new Date().toISOString().split("T")[0],
-      applicationDate: null,
+      applicationDate: undefined,
       recruiterStatus: "Not Started",
       referralStatus: "Not Started",
       assessmentStatus: "Not Started",
@@ -78,9 +101,41 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       salaryMin: "",
       salaryMax: "",
       notes: "",
-      interviewDate: null,
+      interviewDate: undefined,
     },
   });
+
+  // Fetch suggestions when search terms change
+  useEffect(() => {
+    async function fetchCompanies() {
+      if (debouncedCompanySearch.length < 2) return;
+      setIsLoadingCompanies(true);
+      try {
+        const results = await searchCompanies(debouncedCompanySearch);
+        setCompanies(results);
+      } catch (error) {
+        console.error("Failed to fetch companies:", error);
+      } finally {
+        setIsLoadingCompanies(false);
+      }
+    }
+
+    async function fetchJobTitles() {
+      if (debouncedJobTitleSearch.length < 2) return;
+      setIsLoadingJobTitles(true);
+      try {
+        const results = await searchJobTitles(debouncedJobTitleSearch);
+        setJobTitles(results);
+      } catch (error) {
+        console.error("Failed to fetch job titles:", error);
+      } finally {
+        setIsLoadingJobTitles(false);
+      }
+    }
+
+    fetchCompanies();
+    fetchJobTitles();
+  }, [debouncedCompanySearch, debouncedJobTitleSearch]);
 
   const mutation = useMutation({
     mutationFn: async (data: JobFormData) => {
@@ -89,10 +144,9 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       const url = job ? `/api/jobs/${job.id}` : "/api/jobs";
       const method = job ? "PUT" : "POST";
 
-      // Adjust timezone offset for dates before sending to server
       const cleanData = {
         ...data,
-        applicationDate: data.applicationDate 
+        applicationDate: data.applicationDate
           ? new Date(data.applicationDate).toISOString().split('T')[0]
           : null,
         interviewDate: data.interviewDate
@@ -125,7 +179,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       if (!job) {
         form.reset({
           currentDate: new Date().toISOString().split("T")[0],
-          applicationDate: null,
+          applicationDate: undefined,
           recruiterStatus: "Not Started",
           referralStatus: "Not Started",
           assessmentStatus: "Not Started",
@@ -135,7 +189,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
           salaryMin: "",
           salaryMax: "",
           notes: "",
-          interviewDate: null,
+          interviewDate: undefined,
         });
       }
       onSuccess?.();
@@ -174,24 +228,155 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
             control={form.control}
             name="companyName"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Company Name <span className="text-red-500">*</span></FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
+                <Popover open={companyOpen} onOpenChange={setCompanyOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={companyOpen}
+                        className={cn(
+                          "w-full justify-between",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value || "Select company..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search company..."
+                        value={companySearch}
+                        onValueChange={setCompanySearch}
+                      />
+                      <CommandEmpty>
+                        {isLoadingCompanies ? (
+                          "Loading..."
+                        ) : (
+                          <>
+                            No company found.
+                            <Button
+                              variant="ghost"
+                              className="mt-2"
+                              onClick={() => {
+                                field.onChange(companySearch);
+                                setCompanyOpen(false);
+                              }}
+                            >
+                              Use "{companySearch}"
+                            </Button>
+                          </>
+                        )}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {companies.map((company) => (
+                          <CommandItem
+                            key={company.word}
+                            value={company.word}
+                            onSelect={() => {
+                              field.onChange(company.word);
+                              setCompanyOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                company.word === field.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {company.word}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="jobTitle"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Job Title <span className="text-red-500">*</span></FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
+                <Popover open={jobTitleOpen} onOpenChange={setJobTitleOpen}>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={jobTitleOpen}
+                        className={cn(
+                          "w-full justify-between",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value || "Select job title..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search job title..."
+                        value={jobTitleSearch}
+                        onValueChange={setJobTitleSearch}
+                      />
+                      <CommandEmpty>
+                        {isLoadingJobTitles ? (
+                          "Loading..."
+                        ) : (
+                          <>
+                            No job title found.
+                            <Button
+                              variant="ghost"
+                              className="mt-2"
+                              onClick={() => {
+                                field.onChange(jobTitleSearch);
+                                setJobTitleOpen(false);
+                              }}
+                            >
+                              Use "{jobTitleSearch}"
+                            </Button>
+                          </>
+                        )}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {jobTitles.map((title) => (
+                          <CommandItem
+                            key={title.code}
+                            value={title.title}
+                            onSelect={() => {
+                              field.onChange(title.title);
+                              setJobTitleOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                title.title === field.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {title.title}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
                 <FormMessage />
               </FormItem>
             )}
@@ -248,7 +433,11 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormItem>
                 <FormLabel>Application Date</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} value={field.value || ''} />
+                  <Input
+                    type="date"
+                    {...field}
+                    value={field.value || ''}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -282,23 +471,23 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{status.replace(/Status$/, "").replace(/^./, (str) => str.toUpperCase())}</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
+                  <FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      <SelectContent>
+                        {statusOptions.map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
