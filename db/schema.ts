@@ -13,6 +13,7 @@ export const jobs = pgTable("jobs", {
   userId: varchar("user_id", { length: 128 }).notNull(),
   companyName: text("company_name").notNull(),
   jobTitle: text("job_title").notNull(),
+  jobDescription: text("job_description"),  // New field for storing job descriptions
   location: text("location"),
   salaryMin: text("salary_min"),
   salaryMax: text("salary_max"),

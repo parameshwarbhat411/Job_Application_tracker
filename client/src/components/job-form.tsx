@@ -29,6 +29,7 @@ const statusOptions = ["Not Started", "In Progress", "Completed", "Rejected"] as
 const jobSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   jobTitle: z.string().min(1, "Job title is required"),
+  jobDescription: z.string().optional(),
   location: z.string().nullish(),
   salaryMin: z.string().nullish(),
   salaryMax: z.string().nullish(),
@@ -64,6 +65,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       location: job.location || "",
       salaryMin: job.salaryMin?.toString() || "",
       salaryMax: job.salaryMax?.toString() || "",
+      jobDescription: job.jobDescription || "",
       notes: job.notes || "",
       interviewDate: job.interviewDate ? new Date(job.interviewDate).toISOString().split("T")[0] : undefined,
     } : {
@@ -77,6 +79,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       location: "",
       salaryMin: "",
       salaryMax: "",
+      jobDescription: "",
       notes: "",
       interviewDate: undefined,
     },
@@ -135,6 +138,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
           salaryMax: "",
           notes: "",
           interviewDate: undefined,
+          jobDescription: "",
         });
       }
       onSuccess?.();
@@ -309,6 +313,25 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
             />
           ))}
         </div>
+
+        <FormField
+          control={form.control}
+          name="jobDescription"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Job Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  placeholder="Paste the full job description here..."
+                  className="min-h-[200px]"
+                  value={field.value || ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
