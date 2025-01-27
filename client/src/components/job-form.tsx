@@ -33,6 +33,8 @@ const jobSchema = z.object({
   salaryMin: z.string().nullish(),
   salaryMax: z.string().nullish(),
   applicationDate: z.string().nullish().default(() => new Date().toISOString().split("T")[0]),
+  interviewDate: z.string().nullish(),
+  applicationDeadline: z.string().nullish(),
   recruiterStatus: z.enum(statusOptions).default("Not Started"),
   referralStatus: z.enum(statusOptions).default("Not Started"),
   assessmentStatus: z.enum(statusOptions).default("Not Started"),
@@ -62,6 +64,8 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       salaryMin: job.salaryMin || "",
       salaryMax: job.salaryMax || "",
       notes: job.notes || "",
+      interviewDate: job.interviewDate || '',
+      applicationDeadline: job.applicationDeadline || ''
     } : {
       applicationDate: new Date().toISOString().split("T")[0],
       recruiterStatus: "Not Started",
@@ -73,6 +77,8 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       salaryMin: "",
       salaryMax: "",
       notes: "",
+      interviewDate: '',
+      applicationDeadline: ''
     },
   });
 
@@ -93,7 +99,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
 
       const response = await fetch(url, {
         method,
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "X-User-Id": user.uid
         },
@@ -109,9 +115,9 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      toast({ 
-        title: "Success", 
-        description: `Job application ${job ? 'updated' : 'added'} successfully` 
+      toast({
+        title: "Success",
+        description: `Job application ${job ? 'updated' : 'added'} successfully`
       });
       if (!job) {
         form.reset();
@@ -204,14 +210,51 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="applicationDate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Application Date</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="applicationDeadline"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Application Deadline</FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
-          name="applicationDate"
+          name="interviewDate"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Application Date</FormLabel>
+              <FormLabel>Interview Date</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <Input
+                  type="date"
+                  {...field}
+                  value={field.value || ''}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -1,7 +1,9 @@
 import { JobForm } from "@/components/job-form";
 import { JobList } from "@/components/job-list";
+import { JobCalendar } from "@/components/job-calendar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/hooks/use-user";
 import { Plus } from "lucide-react";
 import { useState } from "react";
@@ -44,7 +46,18 @@ export default function Dashboard() {
           </Dialog>
         </div>
 
-        <JobList />
+        <Tabs defaultValue="list" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="list">List View</TabsTrigger>
+            <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+          </TabsList>
+          <TabsContent value="list">
+            <JobList />
+          </TabsContent>
+          <TabsContent value="calendar">
+            <JobCalendar />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

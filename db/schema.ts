@@ -17,6 +17,8 @@ export const jobs = pgTable("jobs", {
   salaryMin: text("salary_min"),
   salaryMax: text("salary_max"),
   applicationDate: timestamp("application_date").notNull(),
+  interviewDate: timestamp("interview_date"),
+  applicationDeadline: timestamp("application_deadline"),
   recruiterStatus: text("recruiter_status").notNull(),
   referralStatus: text("referral_status").notNull(),
   assessmentStatus: text("assessment_status").notNull(),
