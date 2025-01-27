@@ -27,17 +27,17 @@ import type { Job } from "@db/schema";
 const statusOptions = ["Not Started", "In Progress", "Completed", "Rejected"] as const;
 
 const jobSchema = z.object({
-  companyName: z.string().min(1),
-  jobTitle: z.string().min(1),
+  companyName: z.string().min(1, "Company name is required"),
+  jobTitle: z.string().min(1, "Job title is required"),
   location: z.string().optional(),
   salaryMin: z.string().optional(),
   salaryMax: z.string().optional(),
-  applicationDate: z.string(),
-  recruiterStatus: z.enum(statusOptions),
-  referralStatus: z.enum(statusOptions),
-  assessmentStatus: z.enum(statusOptions),
-  interviewStatus: z.enum(statusOptions),
-  applicationStatus: z.enum(statusOptions),
+  applicationDate: z.string().optional(),
+  recruiterStatus: z.enum(statusOptions).optional().default("Not Started"),
+  referralStatus: z.enum(statusOptions).optional().default("Not Started"),
+  assessmentStatus: z.enum(statusOptions).optional().default("Not Started"),
+  interviewStatus: z.enum(statusOptions).optional().default("Not Started"),
+  applicationStatus: z.enum(statusOptions).optional().default("Not Started"),
   notes: z.string().optional(),
 });
 
@@ -98,7 +98,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
         description: `Job application ${job ? 'updated' : 'added'} successfully` 
       });
       if (!job) {
-        form.reset(); // Only reset form for new applications
+        form.reset();
       }
       onSuccess?.();
     },
@@ -123,7 +123,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
             name="companyName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Company Name</FormLabel>
+                <FormLabel>Company Name <span className="text-red-500">*</span></FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -136,7 +136,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
             name="jobTitle"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Job Title</FormLabel>
+                <FormLabel>Job Title <span className="text-red-500">*</span></FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
@@ -167,7 +167,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormItem>
                 <FormLabel>Minimum Salary</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -180,7 +180,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormItem>
                 <FormLabel>Maximum Salary</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -242,7 +242,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
