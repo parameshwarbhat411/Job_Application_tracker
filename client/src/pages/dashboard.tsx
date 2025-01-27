@@ -10,6 +10,7 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Job } from "@db/schema";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export default function Dashboard() {
   const { user, logout } = useUser();
@@ -36,14 +37,15 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <header className="border-b bg-white/50 backdrop-blur-sm">
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-background/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-blue-900">Job Track</h1>
+          <h1 className="text-2xl font-bold">Job Track</h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-muted-foreground">
               Welcome, {user?.displayName || user?.email}
             </span>
+            <ThemeSwitcher />
             <Button variant="outline" onClick={() => logout()}>
               Logout
             </Button>
@@ -54,7 +56,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">
+            <h2 className="text-xl font-semibold">
               Your Applications
             </h2>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

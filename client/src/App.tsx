@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import AuthPage from "./pages/auth-page";
 import Dashboard from "./pages/dashboard";
 import NotFound from "./pages/not-found";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function Router() {
   const { user, isLoading } = useUser();
@@ -33,9 +34,11 @@ function Router() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
-    </QueryClientProvider>
+    <ThemeProvider defaultTheme="system" storageKey="job-track-theme">
+      <QueryClientProvider client={queryClient}>
+        <Router />
+        <Toaster />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
