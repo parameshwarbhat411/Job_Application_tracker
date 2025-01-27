@@ -42,7 +42,11 @@ const jobSchema = z.object({
 
 type JobFormData = z.infer<typeof jobSchema>;
 
-export function JobForm() {
+interface JobFormProps {
+  onSuccess?: () => void;
+}
+
+export function JobForm({ onSuccess }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
@@ -83,6 +87,7 @@ export function JobForm() {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       toast({ title: "Success", description: "Job application added" });
       form.reset();
+      onSuccess?.(); // Call onSuccess callback to close dialog
     },
     onError: (error: Error) => {
       toast({
