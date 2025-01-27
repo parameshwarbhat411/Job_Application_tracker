@@ -20,11 +20,27 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { useState } from "react";
 
-const statusColors: Record<string, string> = {
-  "Not Started": "bg-gray-100 text-gray-800",
-  "In Progress": "bg-blue-100 text-blue-800",
-  "Completed": "bg-green-100 text-green-800",
-  "Rejected": "bg-red-100 text-red-800",
+const statusColors: Record<string, { bg: string; text: string; dot: string }> = {
+  "Not Started": {
+    bg: "bg-gray-100",
+    text: "text-gray-800",
+    dot: "bg-gray-400",
+  },
+  "In Progress": {
+    bg: "bg-blue-100",
+    text: "text-blue-800",
+    dot: "bg-blue-500",
+  },
+  "Completed": {
+    bg: "bg-green-100",
+    text: "text-green-800",
+    dot: "bg-green-500",
+  },
+  "Rejected": {
+    bg: "bg-red-100",
+    text: "text-red-800",
+    dot: "bg-red-500",
+  },
 };
 
 export function JobCard({ job }: { job: Job }) {
@@ -40,8 +56,8 @@ export function JobCard({ job }: { job: Job }) {
       const response = await fetch(`/api/jobs/${job.id}`, {
         method: "DELETE",
         headers: {
-          "X-User-Id": user.uid
-        }
+          "X-User-Id": user.uid,
+        },
       });
 
       if (!response.ok) {
@@ -112,25 +128,29 @@ export function JobCard({ job }: { job: Job }) {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-4">
           {Object.entries({
             Recruiter: job.recruiterStatus,
             Referral: job.referralStatus,
             Assessment: job.assessmentStatus,
             Interview: job.interviewStatus,
             Application: job.applicationStatus,
-          }).map(([label, status]) => (
-            <div key={label}>
-              <p className="text-sm text-gray-500">{label}</p>
-              <span
-                className={`inline-block px-2 py-1 rounded-full text-sm ${
-                  statusColors[status]
-                }`}
-              >
-                {status}
-              </span>
-            </div>
-          ))}
+          }).map(([label, status]) => {
+            const colors = statusColors[status];
+            return (
+              <div key={label} className="relative">
+                <p className="text-sm text-gray-500 mb-1">{label}</p>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${colors.dot}`} />
+                  <span
+                    className={`inline-block px-2 py-1 rounded-full text-sm ${colors.bg} ${colors.text}`}
+                  >
+                    {status}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {job.notes && (
