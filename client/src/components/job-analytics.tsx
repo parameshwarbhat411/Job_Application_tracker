@@ -43,10 +43,10 @@ export function JobAnalytics({ jobs }: JobAnalyticsProps) {
     if (!searchTerm) return jobs;
 
     return jobs.filter((job) => {
-      const value = filterType === "role" 
-        ? job.jobTitle 
-        : filterType === "company" 
-          ? job.companyName 
+      const value = filterType === "role"
+        ? job.jobTitle
+        : filterType === "company"
+          ? job.companyName
           : job.location || "Not Specified";
 
       return value.toLowerCase().includes(searchTerm.toLowerCase());
@@ -107,7 +107,7 @@ export function JobAnalytics({ jobs }: JobAnalyticsProps) {
             />
           </div>
 
-          <div className="h-[300px] relative">
+          <div className="h-[300px] relative flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -123,8 +123,8 @@ export function JobAnalytics({ jobs }: JobAnalyticsProps) {
                   animationDuration={1000}
                 >
                   {statusCounts.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
+                    <Cell
+                      key={`cell-${index}`}
                       fill={entry.color}
                       className="transition-all duration-300 hover:opacity-80"
                     />
@@ -133,14 +133,13 @@ export function JobAnalytics({ jobs }: JobAnalyticsProps) {
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
-            {/* Total Applications Counter in the center */}
-            <motion.div 
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center"
+            <motion.div
+              className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.5 }}
             >
-              <motion.p 
+              <motion.p
                 className="text-3xl font-bold"
                 initial={{ y: 20 }}
                 animate={{ y: 0 }}
@@ -148,7 +147,7 @@ export function JobAnalytics({ jobs }: JobAnalyticsProps) {
               >
                 {totalApplications}
               </motion.p>
-              <motion.p 
+              <motion.p
                 className="text-sm text-muted-foreground"
                 initial={{ y: 20 }}
                 animate={{ y: 0 }}
@@ -170,8 +169,8 @@ export function JobAnalytics({ jobs }: JobAnalyticsProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <motion.p 
-                    className="text-sm font-medium" 
+                  <motion.p
+                    className="text-sm font-medium"
                     style={{ color: status.color }}
                     initial={{ x: -10 }}
                     animate={{ x: 0 }}
@@ -179,7 +178,7 @@ export function JobAnalytics({ jobs }: JobAnalyticsProps) {
                   >
                     {status.name}
                   </motion.p>
-                  <motion.p 
+                  <motion.p
                     className="text-2xl font-bold mt-1"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -210,8 +209,8 @@ export function JobAnalytics({ jobs }: JobAnalyticsProps) {
                     filterType === "role"
                       ? job.jobTitle
                       : filterType === "company"
-                      ? job.companyName
-                      : job.location || "Not Specified";
+                        ? job.companyName
+                        : job.location || "Not Specified";
                   return value === option;
                 }).length;
 
