@@ -158,7 +158,7 @@ export default function Dashboard() {
                   }}
                   className="w-full"
                   style={{
-                    position: activeTab === "list" ? 'relative' : 'absolute',
+                    position: 'absolute',
                     left: 0,
                     right: 0,
                     willChange: 'transform, opacity'
