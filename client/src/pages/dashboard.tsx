@@ -5,9 +5,8 @@ import { JobAnalytics } from "@/components/job-analytics";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { useUser } from "@/hooks/use-user";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Job } from "@db/schema";
@@ -15,7 +14,6 @@ import type { Job } from "@db/schema";
 export default function Dashboard() {
   const { user, logout } = useUser();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: jobs = [] } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
@@ -36,13 +34,6 @@ export default function Dashboard() {
     },
     enabled: !!user,
   });
-
-  // Filter jobs based on search term
-  const filteredJobs = jobs.filter((job) =>
-    searchTerm === "" ||
-    job.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.companyName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -79,16 +70,6 @@ export default function Dashboard() {
             </Dialog>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search by job title or company..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
           <Tabs defaultValue="list" className="space-y-4">
             <TabsList>
               <TabsTrigger value="list">List View</TabsTrigger>
@@ -96,13 +77,13 @@ export default function Dashboard() {
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
             <TabsContent value="list">
-              <JobList jobs={filteredJobs} />
+              <JobList jobs={jobs} />
             </TabsContent>
             <TabsContent value="calendar">
               <JobCalendar />
             </TabsContent>
             <TabsContent value="analytics">
-              <JobAnalytics jobs={filteredJobs} />
+              <JobAnalytics jobs={jobs} />
             </TabsContent>
           </Tabs>
         </div>
