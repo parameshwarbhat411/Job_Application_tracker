@@ -66,7 +66,7 @@ export default function Dashboard() {
                   Add Application
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl overflow-hidden">
+              <DialogContent className="sm:max-w-3xl w-[90vw] p-6 overflow-hidden">
                 <JobForm onSuccess={() => setIsDialogOpen(false)} />
               </DialogContent>
             </Dialog>

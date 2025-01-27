@@ -156,7 +156,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
-        className="space-y-4 max-h-[80vh] overflow-y-auto pr-2"
+        className="space-y-6 max-h-[80vh] overflow-y-auto px-1"
       >
         <FormField
           control={form.control}
