@@ -91,12 +91,12 @@ export default function Dashboard() {
       </motion.header>
 
       <motion.main
-        className="container mx-auto px-4 py-8 flex-1 flex flex-col"
+        className="container mx-auto px-4 py-8 flex-1"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
       >
-        <div className="flex flex-col gap-6 h-full">
+        <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <motion.h2
               className="text-xl font-semibold"
@@ -119,7 +119,7 @@ export default function Dashboard() {
                   </Button>
                 </motion.div>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-3xl w-[90vw] p-6 overflow-hidden">
+              <DialogContent className="sm:max-w-3xl w-[90vw] p-6">
                 <JobForm onSuccess={() => setIsDialogOpen(false)} />
               </DialogContent>
             </Dialog>
@@ -127,9 +127,9 @@ export default function Dashboard() {
 
           <Tabs
             defaultValue="list"
-            className="space-y-4 flex-1 flex flex-col"
             value={activeTab}
             onValueChange={paginate}
+            className="space-y-4"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -143,7 +143,7 @@ export default function Dashboard() {
               </TabsList>
             </motion.div>
 
-            <div className="relative overflow-hidden flex-1">
+            <div className="relative min-h-[600px] overflow-hidden">
               <AnimatePresence initial={false} custom={direction}>
                 <motion.div
                   key={activeTab}
@@ -156,26 +156,20 @@ export default function Dashboard() {
                     x: { type: "spring", stiffness: 100, damping: 15 },
                     opacity: { duration: 0.15 }
                   }}
-                  className="w-full h-full absolute inset-0 overflow-auto"
+                  className="absolute inset-0"
                   style={{
                     willChange: 'transform, opacity'
                   }}
                 >
-                  <TabsContent value="list" forceMount>
-                    <div className={activeTab === "list" ? "block" : "hidden"}>
-                      <JobList jobs={jobs} />
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="calendar" forceMount>
-                    <div className={activeTab === "calendar" ? "block" : "hidden"}>
-                      <JobCalendar jobs={jobs} />
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="analytics" forceMount>
-                    <div className={activeTab === "analytics" ? "block" : "hidden"}>
-                      <JobAnalytics jobs={jobs} />
-                    </div>
-                  </TabsContent>
+                  <div className={`h-full overflow-auto ${activeTab === "list" ? "block" : "hidden"}`}>
+                    <JobList jobs={jobs} />
+                  </div>
+                  <div className={`h-full overflow-auto ${activeTab === "calendar" ? "block" : "hidden"}`}>
+                    <JobCalendar jobs={jobs} />
+                  </div>
+                  <div className={`h-full overflow-auto ${activeTab === "analytics" ? "block" : "hidden"}`}>
+                    <JobAnalytics jobs={jobs} />
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
