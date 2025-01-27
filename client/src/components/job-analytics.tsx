@@ -139,22 +139,22 @@ export function JobAnalytics({ jobs }: JobAnalyticsProps) {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.5 }}
             >
-              <motion.p
-                className="text-3xl font-bold"
+              <motion.span
+                className="text-2xl font-bold"
                 initial={{ y: 20 }}
                 animate={{ y: 0 }}
                 transition={{ delay: 0.7, duration: 0.3 }}
               >
                 {totalApplications}
-              </motion.p>
-              <motion.p
-                className="text-sm text-muted-foreground"
+              </motion.span>
+              <motion.span
+                className="text-xs text-muted-foreground"
                 initial={{ y: 20 }}
                 animate={{ y: 0 }}
                 transition={{ delay: 0.8, duration: 0.3 }}
               >
                 Total Applications
-              </motion.p>
+              </motion.span>
             </motion.div>
           </div>
 
