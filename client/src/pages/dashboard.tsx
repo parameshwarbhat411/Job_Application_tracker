@@ -16,15 +16,21 @@ import { motion, AnimatePresence } from "framer-motion";
 const tabVariants = {
   initial: (direction: number) => ({
     y: direction > 0 ? "30%" : "-30%",
-    opacity: 0
+    opacity: 0,
+    zIndex: 0,
+    scale: 0.95
   }),
   animate: {
     y: 0,
-    opacity: 1
+    opacity: 1,
+    zIndex: 1,
+    scale: 1
   },
   exit: (direction: number) => ({
     y: direction < 0 ? "30%" : "-30%",
-    opacity: 0
+    opacity: 0,
+    zIndex: 0,
+    scale: 0.95
   })
 };
 
@@ -153,13 +159,18 @@ export default function Dashboard() {
                   animate="animate"
                   exit="exit"
                   transition={{
-                    y: { type: "spring", stiffness: 80, damping: 17 },
-                    opacity: { duration: 0.15 }
+                    y: { type: "spring", stiffness: 50, damping: 20 },
+                    opacity: { duration: 0.2 },
+                    scale: { duration: 0.2 }
                   }}
                   className="w-full absolute left-0 right-0"
                   style={{
                     position: 'absolute',
                     width: '100%',
+                    height: '100%',
+                    willChange: 'transform, opacity',
+                    transformOrigin: 'center center',
+                    perspective: '1000px',
                     backfaceVisibility: 'hidden'
                   }}
                 >
