@@ -63,11 +63,11 @@ export default {
           border: "hsl(217.2 32.6% 17.5%)",
           input: "hsl(217.2 32.6% 17.5%)",
           ring: "hsl(224.3 76.3% 48%)",
-        },
-        // Progress bar specific colors for dark mode
-        progress: {
-          background: "hsl(217.2 32.6% 17.5%)",
-          foreground: "hsl(217.2 91.2% 59.8%)",
+          // Progress bar specific colors for dark mode
+          progress: {
+            background: "hsl(217.2 32.6% 17.5%)",
+            foreground: "hsl(213, 94%, 68%)", // Bright blue color for better visibility
+          },
         },
         chart: {
           "1": "hsl(var(--chart-1))",
