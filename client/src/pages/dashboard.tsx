@@ -13,10 +13,42 @@ import type { Job } from "@db/schema";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { motion, AnimatePresence } from "framer-motion";
 
+const tabVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 1000 : -1000,
+    opacity: 0
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 1000 : -1000,
+    opacity: 0
+  })
+};
+
 export default function Dashboard() {
   const { user, logout } = useUser();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
+  const [[page, direction], setPage] = useState([0, 0]);
+
+  const tabToIndex = {
+    list: 0,
+    calendar: 1,
+    analytics: 2
+  };
+
+  const paginate = (newValue: string) => {
+    const newIndex = tabToIndex[newValue as keyof typeof tabToIndex];
+    const currentIndex = tabToIndex[activeTab as keyof typeof tabToIndex];
+    const direction = newIndex > currentIndex ? 1 : -1;
+    setPage([newIndex, direction]);
+    setActiveTab(newValue);
+  };
 
   const { data: jobs = [] } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
@@ -99,7 +131,7 @@ export default function Dashboard() {
             defaultValue="list" 
             className="space-y-4"
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={paginate}
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -113,25 +145,39 @@ export default function Dashboard() {
               </TabsList>
             </motion.div>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <TabsContent value="list" forceMount={activeTab === "list"}>
-                  <JobList jobs={jobs} />
-                </TabsContent>
-                <TabsContent value="calendar" forceMount={activeTab === "calendar"}>
-                  <JobCalendar />
-                </TabsContent>
-                <TabsContent value="analytics" forceMount={activeTab === "analytics"}>
-                  <JobAnalytics jobs={jobs} />
-                </TabsContent>
-              </motion.div>
-            </AnimatePresence>
+            <div className="relative overflow-hidden">
+              <AnimatePresence initial={false} custom={direction} mode="wait">
+                <motion.div
+                  key={activeTab}
+                  custom={direction}
+                  variants={tabVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{
+                    x: { type: "spring", stiffness: 300, damping: 30 },
+                    opacity: { duration: 0.2 }
+                  }}
+                  className="w-full"
+                >
+                  {activeTab === "list" && (
+                    <div className="absolute w-full">
+                      <JobList jobs={jobs} />
+                    </div>
+                  )}
+                  {activeTab === "calendar" && (
+                    <div className="absolute w-full">
+                      <JobCalendar />
+                    </div>
+                  )}
+                  {activeTab === "analytics" && (
+                    <div className="absolute w-full">
+                      <JobAnalytics jobs={jobs} />
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </Tabs>
         </div>
       </motion.main>
