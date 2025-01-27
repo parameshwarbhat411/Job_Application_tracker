@@ -14,18 +14,16 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { motion, AnimatePresence } from "framer-motion";
 
 const tabVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? 1000 : -1000,
+  initial: (direction: number) => ({
+    x: direction > 0 ? "100%" : "-100%",
     opacity: 0
   }),
-  center: {
-    zIndex: 1,
+  animate: {
     x: 0,
     opacity: 1
   },
   exit: (direction: number) => ({
-    zIndex: 0,
-    x: direction < 0 ? 1000 : -1000,
+    x: direction < 0 ? "100%" : "-100%",
     opacity: 0
   })
 };
@@ -145,14 +143,14 @@ export default function Dashboard() {
               </TabsList>
             </motion.div>
 
-            <div className="relative overflow-hidden">
+            <div className="relative min-h-[500px]">
               <AnimatePresence initial={false} custom={direction} mode="wait">
                 <motion.div
                   key={activeTab}
                   custom={direction}
                   variants={tabVariants}
-                  initial="enter"
-                  animate="center"
+                  initial="initial"
+                  animate="animate"
                   exit="exit"
                   transition={{
                     x: { type: "spring", stiffness: 300, damping: 30 },
@@ -160,21 +158,21 @@ export default function Dashboard() {
                   }}
                   className="w-full"
                 >
-                  {activeTab === "list" && (
-                    <div className="absolute w-full">
+                  <TabsContent value="list" forceMount>
+                    <div className={activeTab === "list" ? "block" : "hidden"}>
                       <JobList jobs={jobs} />
                     </div>
-                  )}
-                  {activeTab === "calendar" && (
-                    <div className="absolute w-full">
+                  </TabsContent>
+                  <TabsContent value="calendar" forceMount>
+                    <div className={activeTab === "calendar" ? "block" : "hidden"}>
                       <JobCalendar />
                     </div>
-                  )}
-                  {activeTab === "analytics" && (
-                    <div className="absolute w-full">
+                  </TabsContent>
+                  <TabsContent value="analytics" forceMount>
+                    <div className={activeTab === "analytics" ? "block" : "hidden"}>
                       <JobAnalytics jobs={jobs} />
                     </div>
-                  )}
+                  </TabsContent>
                 </motion.div>
               </AnimatePresence>
             </div>
