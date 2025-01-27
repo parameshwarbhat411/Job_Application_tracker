@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, isFuture } from "date-fns";
 import { Loader2 } from "lucide-react";
 import type { Job } from "@db/schema";
 import { useUser } from "@/hooks/use-user";
@@ -47,27 +47,16 @@ export function JobCalendar() {
 
   // Create event dates map for highlighting
   const eventDates = jobs?.reduce((acc, job) => {
-    // Add application dates
-    if (job.applicationDate) {
-      const date = new Date(job.applicationDate);
-      const key = format(date, "yyyy-MM-dd");
-      if (!acc[key]) acc[key] = [];
-      acc[key].push({ type: "Application", job });
-    }
-    // Add interview dates
-    if (job.interviewDate) {
+    const now = new Date();
+
+    // Only include future dates
+    if (job.interviewDate && isFuture(new Date(job.interviewDate))) {
       const date = new Date(job.interviewDate);
       const key = format(date, "yyyy-MM-dd");
       if (!acc[key]) acc[key] = [];
       acc[key].push({ type: "Interview", job });
     }
-    // Add deadline dates
-    if (job.applicationDeadline) {
-      const date = new Date(job.applicationDeadline);
-      const key = format(date, "yyyy-MM-dd");
-      if (!acc[key]) acc[key] = [];
-      acc[key].push({ type: "Deadline", job });
-    }
+
     return acc;
   }, {} as Record<string, Array<{ type: string; job: Job }>>);
 
@@ -94,7 +83,7 @@ export function JobCalendar() {
         <CardHeader>
           <CardTitle>Calendar View</CardTitle>
           <CardDescription>
-            View your applications, deadlines, and interviews
+            View your upcoming interviews
           </CardDescription>
         </CardHeader>
         <CardContent>

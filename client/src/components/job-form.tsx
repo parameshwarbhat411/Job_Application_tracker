@@ -32,9 +32,9 @@ const jobSchema = z.object({
   location: z.string().nullish(),
   salaryMin: z.string().nullish(),
   salaryMax: z.string().nullish(),
-  applicationDate: z.string().nullish().default(() => new Date().toISOString().split("T")[0]),
+  currentDate: z.string().nullish().default(() => new Date().toISOString().split("T")[0]),
+  applicationDate: z.string().nullish(),
   interviewDate: z.string().nullish(),
-  applicationDeadline: z.string().nullish(),
   recruiterStatus: z.enum(statusOptions).default("Not Started"),
   referralStatus: z.enum(statusOptions).default("Not Started"),
   assessmentStatus: z.enum(statusOptions).default("Not Started"),
@@ -59,15 +59,16 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
     resolver: zodResolver(jobSchema),
     defaultValues: job ? {
       ...job,
-      applicationDate: new Date(job.applicationDate).toISOString().split("T")[0],
+      currentDate: new Date().toISOString().split("T")[0],
+      applicationDate: job.applicationDate ? new Date(job.applicationDate).toISOString().split("T")[0] : "",
       location: job.location || "",
       salaryMin: job.salaryMin || "",
       salaryMax: job.salaryMax || "",
       notes: job.notes || "",
-      interviewDate: job.interviewDate || '',
-      applicationDeadline: job.applicationDeadline || ''
+      interviewDate: job.interviewDate ? new Date(job.interviewDate).toISOString().split("T")[0] : "",
     } : {
-      applicationDate: new Date().toISOString().split("T")[0],
+      currentDate: new Date().toISOString().split("T")[0],
+      applicationDate: "",
       recruiterStatus: "Not Started",
       referralStatus: "Not Started",
       assessmentStatus: "Not Started",
@@ -77,8 +78,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       salaryMin: "",
       salaryMax: "",
       notes: "",
-      interviewDate: '',
-      applicationDeadline: ''
+      interviewDate: "",
     },
   });
 
@@ -139,6 +139,20 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
         onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
         className="space-y-4"
       >
+        <FormField
+          control={form.control}
+          name="currentDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Current Date</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} disabled />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -176,7 +190,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -189,7 +203,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormItem>
                 <FormLabel>Minimum Salary</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -202,7 +216,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormItem>
                 <FormLabel>Maximum Salary</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -218,7 +232,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormItem>
                 <FormLabel>Application Date</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input type="date" {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -226,10 +240,10 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
           />
           <FormField
             control={form.control}
-            name="applicationDeadline"
+            name="interviewDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Application Deadline</FormLabel>
+                <FormLabel>Interview Date</FormLabel>
                 <FormControl>
                   <Input
                     type="date"
@@ -242,24 +256,6 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
             )}
           />
         </div>
-
-        <FormField
-          control={form.control}
-          name="interviewDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Interview Date</FormLabel>
-              <FormControl>
-                <Input
-                  type="date"
-                  {...field}
-                  value={field.value || ''}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <div className="grid grid-cols-2 gap-4">
           {["recruiterStatus", "referralStatus", "assessmentStatus", "interviewStatus", "applicationStatus"].map((status) => (
@@ -301,7 +297,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
