@@ -47,9 +47,15 @@ export function JobCalendar() {
 
   // Create event dates map for highlighting
   const eventDates = jobs?.reduce((acc, job) => {
-    const now = new Date();
+    // Add application dates
+    if (job.applicationDate) {
+      const date = new Date(job.applicationDate);
+      const key = format(date, "yyyy-MM-dd");
+      if (!acc[key]) acc[key] = [];
+      acc[key].push({ type: "Application", job });
+    }
 
-    // Only include future dates
+    // Add future interview dates
     if (job.interviewDate && isFuture(new Date(job.interviewDate))) {
       const date = new Date(job.interviewDate);
       const key = format(date, "yyyy-MM-dd");
@@ -83,7 +89,7 @@ export function JobCalendar() {
         <CardHeader>
           <CardTitle>Calendar View</CardTitle>
           <CardDescription>
-            View your upcoming interviews
+            View your applications and upcoming interviews
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -108,10 +114,13 @@ export function JobCalendar() {
           ) : (
             <div className="space-y-4">
               {selectedDateEvents.map(({ type, job }, index) => (
-                <div key={`${job.id}-${type}-${index}`} className="space-y-1">
-                  <p className="text-sm font-medium">{type}</p>
-                  <p className="text-sm">{job.companyName}</p>
+                <div
+                  key={`${job.id}-${type}-${index}`}
+                  className="p-3 rounded-lg bg-muted/50"
+                >
+                  <p className="text-sm font-medium mb-1">{job.companyName}</p>
                   <p className="text-sm text-muted-foreground">{job.jobTitle}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{type}</p>
                 </div>
               ))}
             </div>
