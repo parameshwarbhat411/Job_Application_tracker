@@ -1,16 +1,39 @@
 import { JobForm } from "@/components/job-form";
 import { JobList } from "@/components/job-list";
 import { JobCalendar } from "@/components/job-calendar";
+import { JobAnalytics } from "@/components/job-analytics";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/hooks/use-user";
 import { Plus } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { Job } from "@db/schema";
 
 export default function Dashboard() {
   const { user, logout } = useUser();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const { data: jobs = [] } = useQuery<Job[]>({
+    queryKey: ["/api/jobs"],
+    queryFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+
+      const response = await fetch("/api/jobs", {
+        headers: {
+          "X-User-Id": user.uid,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch jobs");
+      }
+
+      return response.json();
+    },
+    enabled: !!user,
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -50,12 +73,16 @@ export default function Dashboard() {
           <TabsList>
             <TabsTrigger value="list">List View</TabsTrigger>
             <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
           <TabsContent value="list">
             <JobList />
           </TabsContent>
           <TabsContent value="calendar">
             <JobCalendar />
+          </TabsContent>
+          <TabsContent value="analytics">
+            <JobAnalytics jobs={jobs} />
           </TabsContent>
         </Tabs>
       </main>
