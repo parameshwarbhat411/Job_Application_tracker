@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/use-user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -44,6 +45,7 @@ type JobFormData = z.infer<typeof jobSchema>;
 export function JobForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useUser();
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
@@ -59,13 +61,22 @@ export function JobForm() {
 
   const mutation = useMutation({
     mutationFn: async (data: JobFormData) => {
+      if (!user) throw new Error("Not authenticated");
+
       const response = await fetch("/api/jobs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "X-User-Id": user.uid
+        },
         body: JSON.stringify(data),
-        credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to create job application");
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to create job application");
+      }
+
       return response.json();
     },
     onSuccess: () => {
@@ -73,11 +84,11 @@ export function JobForm() {
       toast({ title: "Success", description: "Job application added" });
       form.reset();
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to add job application",
+        description: error.message || "Failed to add job application",
       });
     },
   });
@@ -138,7 +149,7 @@ export function JobForm() {
               <FormItem>
                 <FormLabel>Minimum Salary</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -151,7 +162,7 @@ export function JobForm() {
               <FormItem>
                 <FormLabel>Maximum Salary</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

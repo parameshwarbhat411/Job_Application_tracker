@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import type { Job } from "@db/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/hooks/use-user";
 
 const statusColors: Record<string, string> = {
   "Not Started": "bg-gray-100 text-gray-800",
@@ -28,14 +29,22 @@ const statusColors: Record<string, string> = {
 export function JobCard({ job }: { job: Job }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useUser();
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+
       const response = await fetch(`/api/jobs/${job.id}`, {
         method: "DELETE",
-        credentials: "include",
+        headers: {
+          "X-User-Id": user.uid
+        }
       });
-      if (!response.ok) throw new Error("Failed to delete job");
+
+      if (!response.ok) {
+        throw new Error("Failed to delete job");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
@@ -95,8 +104,7 @@ export function JobCard({ job }: { job: Job }) {
             <div className="col-span-2">
               <p className="text-sm text-gray-500">Salary Range</p>
               <p>
-                ${job.salaryMin.toLocaleString()} - $
-                {job.salaryMax.toLocaleString()}
+                ${job.salaryMin} - ${job.salaryMax}
               </p>
             </div>
           )}

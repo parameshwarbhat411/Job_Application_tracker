@@ -2,10 +2,29 @@ import { useQuery } from "@tanstack/react-query";
 import { JobCard } from "./job-card";
 import type { Job } from "@db/schema";
 import { Loader2 } from "lucide-react";
+import { useUser } from "@/hooks/use-user";
 
 export function JobList() {
+  const { user } = useUser();
+
   const { data: jobs, isLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
+    queryFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+
+      const response = await fetch("/api/jobs", {
+        headers: {
+          "X-User-Id": user.uid
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch jobs");
+      }
+
+      return response.json();
+    },
+    enabled: !!user
   });
 
   if (isLoading) {
