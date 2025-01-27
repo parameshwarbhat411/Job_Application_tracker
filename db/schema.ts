@@ -10,7 +10,7 @@ export const users = pgTable("users", {
 
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id", { length: 128 }).notNull(),
+  userId: text("user_id").notNull(),
   companyName: text("company_name").notNull(),
   jobTitle: text("job_title").notNull(),
   location: text("location"),
