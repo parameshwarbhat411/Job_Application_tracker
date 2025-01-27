@@ -74,7 +74,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <motion.header
-        className="border-b bg-background/50 backdrop-blur-sm"
+        className="border-b bg-background/50 backdrop-blur-sm sticky top-0 z-50"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -146,7 +146,7 @@ export default function Dashboard() {
               </TabsList>
             </motion.div>
 
-            <div className="relative overflow-hidden" style={{ minHeight: '500px' }}>
+            <div className="relative overflow-hidden min-h-[calc(100vh-20rem)]">
               <AnimatePresence initial={false} custom={direction} mode="wait">
                 <motion.div
                   key={activeTab}
@@ -160,15 +160,12 @@ export default function Dashboard() {
                     opacity: { duration: 0.2 },
                     scale: { duration: 0.2 }
                   }}
+                  className="w-full"
                   style={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: 'auto',
-                    minHeight: '100%',
+                    position: activeTab === "list" ? 'relative' : 'absolute',
                     left: 0,
                     right: 0,
                     willChange: 'transform, opacity',
-                    transformOrigin: 'center center',
                   }}
                 >
                   <TabsContent value="list" forceMount>
