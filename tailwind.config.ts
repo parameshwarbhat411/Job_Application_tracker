@@ -44,6 +44,31 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        // Enhanced dark mode colors
+        dark: {
+          background: "hsl(222.2 84% 4.9%)",
+          foreground: "hsl(210 40% 98%)",
+          card: "hsl(222.2 84% 6.9%)",
+          "card-foreground": "hsl(210 40% 98%)",
+          popover: "hsl(222.2 84% 6.9%)",
+          "popover-foreground": "hsl(210 40% 98%)",
+          primary: "hsl(217.2 91.2% 59.8%)",
+          "primary-foreground": "hsl(222.2 47.4% 11.2%)",
+          secondary: "hsl(217.2 32.6% 17.5%)",
+          "secondary-foreground": "hsl(210 40% 98%)",
+          muted: "hsl(217.2 32.6% 17.5%)",
+          "muted-foreground": "hsl(215 20.2% 65.1%)",
+          accent: "hsl(217.2 32.6% 17.5%)",
+          "accent-foreground": "hsl(210 40% 98%)",
+          border: "hsl(217.2 32.6% 17.5%)",
+          input: "hsl(217.2 32.6% 17.5%)",
+          ring: "hsl(224.3 76.3% 48%)",
+        },
+        // Progress bar specific colors for dark mode
+        progress: {
+          background: "hsl(217.2 32.6% 17.5%)",
+          foreground: "hsl(217.2 91.2% 59.8%)",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",
@@ -64,20 +89,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
