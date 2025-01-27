@@ -32,13 +32,19 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).send("Not authenticated");
       }
 
-      const [job] = await db.insert(jobs).values({
+      const jobData = {
         ...req.body,
         userId: userId,
         applicationDate: new Date(req.body.applicationDate),
+        interviewDate: req.body.interviewDate ? new Date(req.body.interviewDate) : null,
+        applicationDeadline: req.body.applicationDeadline ? new Date(req.body.applicationDeadline) : null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      }).returning();
+      };
+
+      const [job] = await db.insert(jobs)
+        .values(jobData)
+        .returning();
 
       res.json(job);
     } catch (error: any) {
@@ -54,12 +60,16 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).send("Not authenticated");
       }
 
+      const jobData = {
+        ...req.body,
+        applicationDate: new Date(req.body.applicationDate),
+        interviewDate: req.body.interviewDate ? new Date(req.body.interviewDate) : null,
+        applicationDeadline: req.body.applicationDeadline ? new Date(req.body.applicationDeadline) : null,
+        updatedAt: new Date()
+      };
+
       const [job] = await db.update(jobs)
-        .set({ 
-          ...req.body, 
-          applicationDate: new Date(req.body.applicationDate),
-          updatedAt: new Date() 
-        })
+        .set(jobData)
         .where(eq(jobs.id, parseInt(req.params.id)))
         .returning();
 
