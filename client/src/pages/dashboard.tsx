@@ -15,21 +15,18 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const tabVariants = {
   initial: (direction: number) => ({
-    y: direction > 0 ? "30%" : "-30%",
+    x: direction > 0 ? "100%" : "-100%",
     opacity: 0,
-    zIndex: 0,
     scale: 0.95
   }),
   animate: {
-    y: 0,
+    x: 0,
     opacity: 1,
-    zIndex: 1,
     scale: 1
   },
   exit: (direction: number) => ({
-    y: direction < 0 ? "30%" : "-30%",
+    x: direction < 0 ? "100%" : "-100%",
     opacity: 0,
-    zIndex: 0,
     scale: 0.95
   })
 };
@@ -149,7 +146,7 @@ export default function Dashboard() {
               </TabsList>
             </motion.div>
 
-            <div className="relative min-h-[500px]">
+            <div className="relative overflow-hidden" style={{ minHeight: '500px' }}>
               <AnimatePresence initial={false} custom={direction} mode="wait">
                 <motion.div
                   key={activeTab}
@@ -159,19 +156,18 @@ export default function Dashboard() {
                   animate="animate"
                   exit="exit"
                   transition={{
-                    y: { type: "spring", stiffness: 50, damping: 20 },
-                    opacity: { duration: 0.2 },
-                    scale: { duration: 0.2 }
+                    x: { type: "spring", stiffness: 60, damping: 15 },
+                    opacity: { duration: 0.25 },
+                    scale: { duration: 0.25 }
                   }}
-                  className="w-full absolute left-0 right-0"
                   style={{
                     position: 'absolute',
                     width: '100%',
                     height: '100%',
+                    left: 0,
+                    right: 0,
                     willChange: 'transform, opacity',
                     transformOrigin: 'center center',
-                    perspective: '1000px',
-                    backfaceVisibility: 'hidden'
                   }}
                 >
                   <TabsContent value="list" forceMount>
