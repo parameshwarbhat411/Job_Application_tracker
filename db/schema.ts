@@ -1,21 +1,21 @@
-import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: varchar("id", { length: 128 }).primaryKey(),
   username: text("username").unique().notNull(),
   password: text("password").notNull(),
 });
 
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: varchar("user_id", { length: 128 }).notNull(),
   companyName: text("company_name").notNull(),
   jobTitle: text("job_title").notNull(),
   location: text("location"),
-  salaryMin: integer("salary_min"),
-  salaryMax: integer("salary_max"),
+  salaryMin: text("salary_min"),
+  salaryMax: text("salary_max"),
   applicationDate: timestamp("application_date").notNull(),
   recruiterStatus: text("recruiter_status").notNull(),
   referralStatus: text("referral_status").notNull(),
@@ -34,12 +34,12 @@ export const jobsRelations = relations(jobs, ({ one }) => ({
   }),
 }));
 
-export const insertUserSchema = createInsertSchema(users);
-export const selectUserSchema = createSelectSchema(users);
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-
 export const insertJobSchema = createInsertSchema(jobs);
 export const selectJobSchema = createSelectSchema(jobs);
 export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
+
+export const insertUserSchema = createInsertSchema(users);
+export const selectUserSchema = createSelectSchema(users);
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;

@@ -1,98 +1,55 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { InsertUser, SelectUser } from "@db/schema";
-
-type RequestResult = {
-  ok: true;
-} | {
-  ok: false;
-  message: string;
-};
-
-async function handleRequest(
-  url: string,
-  method: string,
-  body?: InsertUser
-): Promise<RequestResult> {
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      if (response.status >= 500) {
-        return { ok: false, message: response.statusText };
-      }
-
-      const message = await response.text();
-      return { ok: false, message };
-    }
-
-    return { ok: true };
-  } catch (e: any) {
-    return { ok: false, message: e.toString() };
-  }
-}
-
-async function fetchUser(): Promise<SelectUser | null> {
-  const response = await fetch('/api/user', {
-    credentials: 'include'
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      return null;
-    }
-
-    if (response.status >= 500) {
-      throw new Error(`${response.status}: ${response.statusText}`);
-    }
-
-    throw new Error(`${response.status}: ${await response.text()}`);
-  }
-
-  return response.json();
-}
+import { useEffect, useState } from "react";
+import { 
+  signInWithPopup, 
+  signOut, 
+  type User,
+  onAuthStateChanged
+} from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
 
 export function useUser() {
-  const queryClient = useQueryClient();
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  const { data: user, error, isLoading } = useQuery<SelectUser | null, Error>({
-    queryKey: ['user'],
-    queryFn: fetchUser,
-    staleTime: Infinity,
-    retry: false
-  });
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, 
+      (user) => {
+        setUser(user);
+        setIsLoading(false);
+      },
+      (error) => {
+        setError(error);
+        setIsLoading(false);
+      }
+    );
 
-  const loginMutation = useMutation<RequestResult, Error, InsertUser>({
-    mutationFn: (userData) => handleRequest('/api/login', 'POST', userData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
-    },
-  });
+    return () => unsubscribe();
+  }, []);
 
-  const logoutMutation = useMutation<RequestResult, Error>({
-    mutationFn: () => handleRequest('/api/logout', 'POST'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
-    },
-  });
+  const login = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      return { ok: true };
+    } catch (error: any) {
+      return { ok: false, message: error.message };
+    }
+  };
 
-  const registerMutation = useMutation<RequestResult, Error, InsertUser>({
-    mutationFn: (userData) => handleRequest('/api/register', 'POST', userData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
-    },
-  });
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      return { ok: true };
+    } catch (error: any) {
+      return { ok: false, message: error.message };
+    }
+  };
 
   return {
     user,
     isLoading,
     error,
-    login: loginMutation.mutateAsync,
-    logout: logoutMutation.mutateAsync,
-    register: registerMutation.mutateAsync,
+    login,
+    logout
   };
 }

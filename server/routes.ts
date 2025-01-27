@@ -1,21 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
 import { db } from "@db";
 import { jobs } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
-  setupAuth(app);
-
   // Jobs API
   app.get("/api/jobs", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    const userId = req.headers["x-user-id"];
+    if (!userId) {
       return res.status(401).send("Not authenticated");
     }
 
     const userJobs = await db.query.jobs.findMany({
-      where: eq(jobs.userId, req.user.id),
+      where: eq(jobs.userId, userId as string),
       orderBy: (jobs, { desc }) => [desc(jobs.updatedAt)],
     });
 
@@ -23,20 +21,22 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/jobs", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    const userId = req.headers["x-user-id"];
+    if (!userId) {
       return res.status(401).send("Not authenticated");
     }
 
     const job = await db.insert(jobs).values({
       ...req.body,
-      userId: req.user.id,
+      userId: userId as string,
     }).returning();
 
     res.json(job[0]);
   });
 
   app.put("/api/jobs/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    const userId = req.headers["x-user-id"];
+    if (!userId) {
       return res.status(401).send("Not authenticated");
     }
 
@@ -49,7 +49,8 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.delete("/api/jobs/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    const userId = req.headers["x-user-id"];
+    if (!userId) {
       return res.status(401).send("Not authenticated");
     }
 
