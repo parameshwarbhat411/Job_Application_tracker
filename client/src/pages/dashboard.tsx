@@ -69,7 +69,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <motion.header
         className="border-b bg-background/50 backdrop-blur-sm sticky top-0 z-50"
         initial={{ opacity: 0, y: -20 }}
@@ -91,12 +91,12 @@ export default function Dashboard() {
       </motion.header>
 
       <motion.main
-        className="container mx-auto px-4 py-8"
+        className="container mx-auto px-4 py-8 flex-1 flex flex-col"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.2 }}
       >
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 h-full">
           <div className="flex justify-between items-center">
             <motion.h2
               className="text-xl font-semibold"
@@ -127,7 +127,7 @@ export default function Dashboard() {
 
           <Tabs
             defaultValue="list"
-            className="space-y-4"
+            className="space-y-4 flex-1 flex flex-col"
             value={activeTab}
             onValueChange={paginate}
           >
@@ -143,7 +143,7 @@ export default function Dashboard() {
               </TabsList>
             </motion.div>
 
-            <div className="relative overflow-hidden min-h-[calc(100vh-20rem)]">
+            <div className="relative overflow-hidden flex-1">
               <AnimatePresence initial={false} custom={direction}>
                 <motion.div
                   key={activeTab}
@@ -156,11 +156,8 @@ export default function Dashboard() {
                     x: { type: "spring", stiffness: 100, damping: 15 },
                     opacity: { duration: 0.15 }
                   }}
-                  className="w-full"
+                  className="w-full h-full absolute inset-0 overflow-auto"
                   style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
                     willChange: 'transform, opacity'
                   }}
                 >
@@ -171,7 +168,7 @@ export default function Dashboard() {
                   </TabsContent>
                   <TabsContent value="calendar" forceMount>
                     <div className={activeTab === "calendar" ? "block" : "hidden"}>
-                      <JobCalendar />
+                      <JobCalendar jobs={jobs} />
                     </div>
                   </TabsContent>
                   <TabsContent value="analytics" forceMount>
