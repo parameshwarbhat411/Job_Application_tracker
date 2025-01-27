@@ -55,12 +55,13 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const today = new Date().toISOString().split("T")[0];
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
     defaultValues: job ? {
       ...job,
-      currentDate: new Date().toISOString().split("T")[0],
+      currentDate: today,
       applicationDate: job.applicationDate ? new Date(job.applicationDate).toISOString().split("T")[0] : undefined,
       location: job.location || "",
       salaryMin: job.salaryMin?.toString() || "",
@@ -69,8 +70,8 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       notes: job.notes || "",
       interviewDate: job.interviewDate ? new Date(job.interviewDate).toISOString().split("T")[0] : undefined,
     } : {
-      currentDate: new Date().toISOString().split("T")[0],
-      applicationDate: undefined,
+      currentDate: today,
+      applicationDate: today, 
       recruiterStatus: "Not Started",
       referralStatus: "Not Started",
       assessmentStatus: "Not Started",
@@ -126,8 +127,8 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       });
       if (!job) {
         form.reset({
-          currentDate: new Date().toISOString().split("T")[0],
-          applicationDate: undefined,
+          currentDate: today,
+          applicationDate: today, 
           recruiterStatus: "Not Started",
           referralStatus: "Not Started",
           assessmentStatus: "Not Started",
@@ -255,7 +256,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
                   <Input
                     type="date"
                     {...field}
-                    value={field.value || ''}
+                    value={field.value || today} 
                   />
                 </FormControl>
                 <FormMessage />
