@@ -89,13 +89,16 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       const url = job ? `/api/jobs/${job.id}` : "/api/jobs";
       const method = job ? "PUT" : "POST";
 
-      // Clean up empty strings to null before sending
-      const cleanData = Object.fromEntries(
-        Object.entries(data).map(([key, value]) => [
-          key,
-          value === "" ? null : value
-        ])
-      );
+      // Adjust timezone offset for dates before sending to server
+      const cleanData = {
+        ...data,
+        applicationDate: data.applicationDate 
+          ? new Date(data.applicationDate).toISOString().split('T')[0]
+          : null,
+        interviewDate: data.interviewDate
+          ? new Date(data.interviewDate).toISOString().split('T')[0]
+          : null
+      };
 
       const response = await fetch(url, {
         method,

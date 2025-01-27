@@ -5,7 +5,6 @@ import { jobs } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
-  // Jobs API
   app.get("/api/jobs", async (req, res) => {
     try {
       const userId = req.headers["x-user-id"];
@@ -32,11 +31,16 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).send("Not authenticated");
       }
 
+      // Create a Date object at noon UTC to avoid timezone issues
       const jobData = {
         ...req.body,
         userId: userId,
-        applicationDate: req.body.applicationDate ? new Date(req.body.applicationDate + 'T00:00:00.000Z') : null,
-        interviewDate: req.body.interviewDate ? new Date(req.body.interviewDate + 'T00:00:00.000Z') : null,
+        applicationDate: req.body.applicationDate 
+          ? new Date(req.body.applicationDate + 'T12:00:00.000Z')
+          : null,
+        interviewDate: req.body.interviewDate 
+          ? new Date(req.body.interviewDate + 'T12:00:00.000Z')
+          : null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -61,8 +65,12 @@ export function registerRoutes(app: Express): Server {
 
       const jobData = {
         ...req.body,
-        applicationDate: req.body.applicationDate ? new Date(req.body.applicationDate + 'T00:00:00.000Z') : null,
-        interviewDate: req.body.interviewDate ? new Date(req.body.interviewDate + 'T00:00:00.000Z') : null,
+        applicationDate: req.body.applicationDate 
+          ? new Date(req.body.applicationDate + 'T12:00:00.000Z')
+          : null,
+        interviewDate: req.body.interviewDate 
+          ? new Date(req.body.interviewDate + 'T12:00:00.000Z')
+          : null,
         updatedAt: new Date()
       };
 
