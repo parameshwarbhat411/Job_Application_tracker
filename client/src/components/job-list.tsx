@@ -29,7 +29,7 @@ export function JobList({ jobs }: JobListProps) {
           placeholder="Search by job title or company..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4"
+          className="w-full pl-10 pr-4 focus-visible:ring-0 focus-visible:ring-offset-0"
         />
       </div>
 
