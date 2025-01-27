@@ -29,16 +29,16 @@ const statusOptions = ["Not Started", "In Progress", "Completed", "Rejected"] as
 const jobSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
   jobTitle: z.string().min(1, "Job title is required"),
-  location: z.string().optional(),
-  salaryMin: z.string().optional(),
-  salaryMax: z.string().optional(),
-  applicationDate: z.string().optional(),
-  recruiterStatus: z.enum(statusOptions).optional().default("Not Started"),
-  referralStatus: z.enum(statusOptions).optional().default("Not Started"),
-  assessmentStatus: z.enum(statusOptions).optional().default("Not Started"),
-  interviewStatus: z.enum(statusOptions).optional().default("Not Started"),
-  applicationStatus: z.enum(statusOptions).optional().default("Not Started"),
-  notes: z.string().optional(),
+  location: z.string().nullish(),
+  salaryMin: z.string().nullish(),
+  salaryMax: z.string().nullish(),
+  applicationDate: z.string().nullish().default(() => new Date().toISOString().split("T")[0]),
+  recruiterStatus: z.enum(statusOptions).default("Not Started"),
+  referralStatus: z.enum(statusOptions).default("Not Started"),
+  assessmentStatus: z.enum(statusOptions).default("Not Started"),
+  interviewStatus: z.enum(statusOptions).default("Not Started"),
+  applicationStatus: z.enum(statusOptions).default("Not Started"),
+  notes: z.string().nullish(),
 });
 
 type JobFormData = z.infer<typeof jobSchema>;
@@ -58,6 +58,10 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
     defaultValues: job ? {
       ...job,
       applicationDate: new Date(job.applicationDate).toISOString().split("T")[0],
+      location: job.location || "",
+      salaryMin: job.salaryMin || "",
+      salaryMax: job.salaryMax || "",
+      notes: job.notes || "",
     } : {
       applicationDate: new Date().toISOString().split("T")[0],
       recruiterStatus: "Not Started",
@@ -65,6 +69,10 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       assessmentStatus: "Not Started",
       interviewStatus: "Not Started",
       applicationStatus: "Not Started",
+      location: "",
+      salaryMin: "",
+      salaryMax: "",
+      notes: "",
     },
   });
 
@@ -75,13 +83,21 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       const url = job ? `/api/jobs/${job.id}` : "/api/jobs";
       const method = job ? "PUT" : "POST";
 
+      // Clean up empty strings to null before sending
+      const cleanData = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [
+          key,
+          value === "" ? null : value
+        ])
+      );
+
       const response = await fetch(url, {
         method,
         headers: { 
           "Content-Type": "application/json",
           "X-User-Id": user.uid
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(cleanData),
       });
 
       if (!response.ok) {
@@ -167,7 +183,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormItem>
                 <FormLabel>Minimum Salary</FormLabel>
                 <FormControl>
-                  <Input {...field} value={field.value || ''} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -180,7 +196,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormItem>
                 <FormLabel>Maximum Salary</FormLabel>
                 <FormControl>
-                  <Input {...field} value={field.value || ''} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -242,7 +258,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} value={field.value || ''} />
+                <Textarea {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
