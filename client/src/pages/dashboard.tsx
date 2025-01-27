@@ -16,18 +16,15 @@ import { motion, AnimatePresence } from "framer-motion";
 const tabVariants = {
   initial: (direction: number) => ({
     x: direction > 0 ? "100%" : "-100%",
-    opacity: 0,
-    scale: 0.95
+    opacity: 0
   }),
   animate: {
     x: 0,
-    opacity: 1,
-    scale: 1
+    opacity: 1
   },
   exit: (direction: number) => ({
     x: direction < 0 ? "100%" : "-100%",
-    opacity: 0,
-    scale: 0.95
+    opacity: 0
   })
 };
 
@@ -77,7 +74,7 @@ export default function Dashboard() {
         className="border-b bg-background/50 backdrop-blur-sm sticky top-0 z-50"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
       >
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Job Track</h1>
@@ -97,7 +94,7 @@ export default function Dashboard() {
         className="container mx-auto px-4 py-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
+        transition={{ duration: 0.2 }}
       >
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
@@ -105,7 +102,7 @@ export default function Dashboard() {
               className="text-xl font-semibold"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
+              transition={{ duration: 0.2 }}
             >
               Your Applications
             </motion.h2>
@@ -114,7 +111,7 @@ export default function Dashboard() {
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
@@ -137,7 +134,7 @@ export default function Dashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.4 }}
+              transition={{ duration: 0.2 }}
             >
               <TabsList>
                 <TabsTrigger value="list">List View</TabsTrigger>
@@ -147,7 +144,7 @@ export default function Dashboard() {
             </motion.div>
 
             <div className="relative overflow-hidden min-h-[calc(100vh-20rem)]">
-              <AnimatePresence initial={false} custom={direction} mode="wait">
+              <AnimatePresence initial={false} custom={direction}>
                 <motion.div
                   key={activeTab}
                   custom={direction}
@@ -156,16 +153,15 @@ export default function Dashboard() {
                   animate="animate"
                   exit="exit"
                   transition={{
-                    x: { type: "spring", stiffness: 70, damping: 12 },
-                    opacity: { duration: 0.2 },
-                    scale: { duration: 0.2 }
+                    x: { type: "spring", stiffness: 100, damping: 15 },
+                    opacity: { duration: 0.15 }
                   }}
                   className="w-full"
                   style={{
                     position: activeTab === "list" ? 'relative' : 'absolute',
                     left: 0,
                     right: 0,
-                    willChange: 'transform, opacity',
+                    willChange: 'transform, opacity'
                   }}
                 >
                   <TabsContent value="list" forceMount>
