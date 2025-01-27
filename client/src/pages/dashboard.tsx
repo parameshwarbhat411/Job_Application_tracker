@@ -11,10 +11,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Job } from "@db/schema";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Dashboard() {
   const { user, logout } = useUser();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("list");
 
   const { data: jobs = [] } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
@@ -38,7 +40,12 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-background/50 backdrop-blur-sm">
+      <motion.header 
+        className="border-b bg-background/50 backdrop-blur-sm"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Job Track</h1>
           <div className="flex items-center gap-4">
@@ -51,20 +58,36 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
-      <main className="container mx-auto px-4 py-8">
+      <motion.main 
+        className="container mx-auto px-4 py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">
+            <motion.h2 
+              className="text-xl font-semibold"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+            >
               Your Applications
-            </h2>
+            </motion.h2>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Application
-                </Button>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                >
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Application
+                  </Button>
+                </motion.div>
               </DialogTrigger>
               <DialogContent className="sm:max-w-3xl w-[90vw] p-6 overflow-hidden">
                 <JobForm onSuccess={() => setIsDialogOpen(false)} />
@@ -72,24 +95,46 @@ export default function Dashboard() {
             </Dialog>
           </div>
 
-          <Tabs defaultValue="list" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="list">List View</TabsTrigger>
-              <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            </TabsList>
-            <TabsContent value="list">
-              <JobList jobs={jobs} />
-            </TabsContent>
-            <TabsContent value="calendar">
-              <JobCalendar />
-            </TabsContent>
-            <TabsContent value="analytics">
-              <JobAnalytics jobs={jobs} />
-            </TabsContent>
+          <Tabs 
+            defaultValue="list" 
+            className="space-y-4"
+            value={activeTab}
+            onValueChange={setActiveTab}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
+            >
+              <TabsList>
+                <TabsTrigger value="list">List View</TabsTrigger>
+                <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              </TabsList>
+            </motion.div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <TabsContent value="list" forceMount={activeTab === "list"}>
+                  <JobList jobs={jobs} />
+                </TabsContent>
+                <TabsContent value="calendar" forceMount={activeTab === "calendar"}>
+                  <JobCalendar />
+                </TabsContent>
+                <TabsContent value="analytics" forceMount={activeTab === "analytics"}>
+                  <JobAnalytics jobs={jobs} />
+                </TabsContent>
+              </motion.div>
+            </AnimatePresence>
           </Tabs>
         </div>
-      </main>
+      </motion.main>
     </div>
   );
 }
