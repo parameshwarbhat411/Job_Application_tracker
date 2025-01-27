@@ -22,19 +22,20 @@ export function JobList({ jobs }: JobListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      <div className="relative w-full">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
         <Input
+          type="text"
           placeholder="Search by job title or company..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="w-full pl-10 pr-4"
         />
       </div>
 
       {!filteredJobs?.length ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">No applications found. Add your first one!</p>
+          <p className="text-muted-foreground">No applications found. Add your first one!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

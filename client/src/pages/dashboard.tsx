@@ -4,10 +4,9 @@ import { JobCalendar } from "@/components/job-calendar";
 import { JobAnalytics } from "@/components/job-analytics";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/hooks/use-user";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Job } from "@db/schema";
@@ -124,14 +123,6 @@ export default function Dashboard() {
                 <JobForm onSuccess={() => setIsDialogOpen(false)} />
               </DialogContent>
             </Dialog>
-          </div>
-
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by job title or company..."
-              className="pl-10 w-full"
-            />
           </div>
 
           <Tabs
