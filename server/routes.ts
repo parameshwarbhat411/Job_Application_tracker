@@ -35,9 +35,8 @@ export function registerRoutes(app: Express): Server {
       const jobData = {
         ...req.body,
         userId: userId,
-        applicationDate: new Date(req.body.applicationDate),
+        applicationDate: req.body.applicationDate ? new Date(req.body.applicationDate) : null,
         interviewDate: req.body.interviewDate ? new Date(req.body.interviewDate) : null,
-        applicationDeadline: req.body.applicationDeadline ? new Date(req.body.applicationDeadline) : null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -62,9 +61,8 @@ export function registerRoutes(app: Express): Server {
 
       const jobData = {
         ...req.body,
-        applicationDate: new Date(req.body.applicationDate),
+        applicationDate: req.body.applicationDate ? new Date(req.body.applicationDate) : null,
         interviewDate: req.body.interviewDate ? new Date(req.body.interviewDate) : null,
-        applicationDeadline: req.body.applicationDeadline ? new Date(req.body.applicationDeadline) : null,
         updatedAt: new Date()
       };
 

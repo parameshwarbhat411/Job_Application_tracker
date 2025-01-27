@@ -32,7 +32,7 @@ const jobSchema = z.object({
   location: z.string().nullish(),
   salaryMin: z.string().nullish(),
   salaryMax: z.string().nullish(),
-  currentDate: z.string().nullish().default(() => new Date().toISOString().split("T")[0]),
+  currentDate: z.string(),
   applicationDate: z.string().nullish(),
   interviewDate: z.string().nullish(),
   recruiterStatus: z.enum(statusOptions).default("Not Started"),
@@ -60,15 +60,15 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
     defaultValues: job ? {
       ...job,
       currentDate: new Date().toISOString().split("T")[0],
-      applicationDate: job.applicationDate ? new Date(job.applicationDate).toISOString().split("T")[0] : "",
+      applicationDate: job.applicationDate ? new Date(job.applicationDate).toISOString().split("T")[0] : null,
       location: job.location || "",
       salaryMin: job.salaryMin || "",
       salaryMax: job.salaryMax || "",
       notes: job.notes || "",
-      interviewDate: job.interviewDate ? new Date(job.interviewDate).toISOString().split("T")[0] : "",
+      interviewDate: job.interviewDate ? new Date(job.interviewDate).toISOString().split("T")[0] : null,
     } : {
       currentDate: new Date().toISOString().split("T")[0],
-      applicationDate: "",
+      applicationDate: null,
       recruiterStatus: "Not Started",
       referralStatus: "Not Started",
       assessmentStatus: "Not Started",
@@ -78,7 +78,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       salaryMin: "",
       salaryMax: "",
       notes: "",
-      interviewDate: "",
+      interviewDate: null,
     },
   });
 
@@ -120,7 +120,20 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
         description: `Job application ${job ? 'updated' : 'added'} successfully`
       });
       if (!job) {
-        form.reset();
+        form.reset({
+          currentDate: new Date().toISOString().split("T")[0],
+          applicationDate: null,
+          recruiterStatus: "Not Started",
+          referralStatus: "Not Started",
+          assessmentStatus: "Not Started",
+          interviewStatus: "Not Started",
+          applicationStatus: "Not Started",
+          location: "",
+          salaryMin: "",
+          salaryMax: "",
+          notes: "",
+          interviewDate: null,
+        });
       }
       onSuccess?.();
     },
@@ -272,7 +285,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
