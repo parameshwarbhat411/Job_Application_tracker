@@ -153,10 +153,15 @@ export default function Dashboard() {
                   animate="animate"
                   exit="exit"
                   transition={{
-                    y: { type: "spring", stiffness: 200, damping: 25 },
-                    opacity: { duration: 0.2 }
+                    y: { type: "spring", stiffness: 80, damping: 17 },
+                    opacity: { duration: 0.15 }
                   }}
-                  className="w-full"
+                  className="w-full absolute left-0 right-0"
+                  style={{
+                    position: 'absolute',
+                    width: '100%',
+                    backfaceVisibility: 'hidden'
+                  }}
                 >
                   <TabsContent value="list" forceMount>
                     <div className={activeTab === "list" ? "block" : "hidden"}>
