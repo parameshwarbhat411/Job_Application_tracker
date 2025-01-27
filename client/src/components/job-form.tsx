@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import type { Job } from "@db/schema";
 
 const statusOptions = ["Not Started", "In Progress", "Completed", "Rejected"] as const;
 
@@ -43,17 +44,21 @@ const jobSchema = z.object({
 type JobFormData = z.infer<typeof jobSchema>;
 
 interface JobFormProps {
+  job?: Job;
   onSuccess?: () => void;
 }
 
-export function JobForm({ onSuccess }: JobFormProps) {
+export function JobForm({ job, onSuccess }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
-    defaultValues: {
+    defaultValues: job ? {
+      ...job,
+      applicationDate: new Date(job.applicationDate).toISOString().split("T")[0],
+    } : {
       applicationDate: new Date().toISOString().split("T")[0],
       recruiterStatus: "Not Started",
       referralStatus: "Not Started",
@@ -67,8 +72,11 @@ export function JobForm({ onSuccess }: JobFormProps) {
     mutationFn: async (data: JobFormData) => {
       if (!user) throw new Error("Not authenticated");
 
-      const response = await fetch("/api/jobs", {
-        method: "POST",
+      const url = job ? `/api/jobs/${job.id}` : "/api/jobs";
+      const method = job ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { 
           "Content-Type": "application/json",
           "X-User-Id": user.uid
@@ -78,22 +86,27 @@ export function JobForm({ onSuccess }: JobFormProps) {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || "Failed to create job application");
+        throw new Error(errorText || `Failed to ${job ? 'update' : 'create'} job application`);
       }
 
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
-      toast({ title: "Success", description: "Job application added" });
-      form.reset();
-      onSuccess?.(); // Call onSuccess callback to close dialog
+      toast({ 
+        title: "Success", 
+        description: `Job application ${job ? 'updated' : 'added'} successfully` 
+      });
+      if (!job) {
+        form.reset(); // Only reset form for new applications
+      }
+      onSuccess?.();
     },
     onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to add job application",
+        description: error.message || `Failed to ${job ? 'update' : 'add'} job application`,
       });
     },
   });
@@ -237,7 +250,7 @@ export function JobForm({ onSuccess }: JobFormProps) {
         />
 
         <Button type="submit" className="w-full">
-          Add Application
+          {job ? 'Update Application' : 'Add Application'}
         </Button>
       </form>
     </Form>

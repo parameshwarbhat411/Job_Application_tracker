@@ -18,6 +18,7 @@ import type { Job } from "@db/schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
+import { useState } from "react";
 
 const statusColors: Record<string, string> = {
   "Not Started": "bg-gray-100 text-gray-800",
@@ -30,6 +31,7 @@ export function JobCard({ job }: { job: Job }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useUser();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
@@ -70,14 +72,14 @@ export function JobCard({ job }: { job: Job }) {
             </CardDescription>
           </div>
           <div className="flex gap-2">
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <Edit2 className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent>
-                <JobForm />
+                <JobForm job={job} onSuccess={() => setIsDialogOpen(false)} />
               </DialogContent>
             </Dialog>
             <Button
