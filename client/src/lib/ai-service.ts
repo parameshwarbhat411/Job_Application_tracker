@@ -1,16 +1,20 @@
 import OpenAI from "openai";
 
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-if (!apiKey) {
-  console.warn(
-    "OpenAI API key is not configured. ATS analysis will be disabled.",
-  );
-}
 
-const openai = apiKey ? new OpenAI({
-  apiKey,
-  dangerouslyAllowBrowser: true, // Required for client-side usage
-}) : null;
+let openai: OpenAI | null = null;
+
+// Initialize OpenAI client only if API key is available
+try {
+  if (apiKey) {
+    openai = new OpenAI({
+      apiKey,
+      dangerouslyAllowBrowser: true,
+    });
+  }
+} catch (error) {
+  console.error("Failed to initialize OpenAI client:", error);
+}
 
 export interface ATSAnalysis {
   keywords: { text: string; importance: "high" | "medium" | "low" }[];
@@ -23,7 +27,7 @@ export async function analyzeJobDescription(
 ): Promise<ATSAnalysis> {
   try {
     if (!openai) {
-      throw new Error("OpenAI API key is not configured in environment variables. Please add VITE_OPENAI_API_KEY to your environment.");
+      throw new Error("OpenAI API key is not properly configured. Please configure OPENAI_API_KEY in your environment.");
     }
 
     if (!description || description.trim().length < 50) {
@@ -69,7 +73,6 @@ export async function analyzeJobDescription(
     return result;
   } catch (error: any) {
     console.error("Error analyzing job description:", error);
-    // Return more specific error messages to the user
     if (error.message.includes("API key")) {
       throw new Error("OpenAI API key is not properly configured. Please check your environment settings.");
     } else if (error.message.includes("longer job description")) {
