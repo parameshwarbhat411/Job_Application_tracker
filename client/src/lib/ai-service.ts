@@ -2,24 +2,28 @@ import OpenAI from "openai";
 
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 if (!apiKey) {
-  console.error('OpenAI API key is not configured. ATS analysis will be disabled.');
+  console.error(
+    "OpenAI API key is not configured. ATS analysis will be disabled.",
+  );
 }
 
-const openai = new OpenAI({
+const openai = apiKey ? new OpenAI({
   apiKey,
-  dangerouslyAllowBrowser: true // Required for client-side usage
-});
+  dangerouslyAllowBrowser: true, // Required for client-side usage
+}) : null;
 
 export interface ATSAnalysis {
-  keywords: { text: string; importance: 'high' | 'medium' | 'low' }[];
+  keywords: { text: string; importance: "high" | "medium" | "low" }[];
   missingSkills: string[];
   recommendations: string[];
 }
 
-export async function analyzeJobDescription(description: string): Promise<ATSAnalysis> {
+export async function analyzeJobDescription(
+  description: string,
+): Promise<ATSAnalysis> {
   try {
-    if (!apiKey) {
-      throw new Error('OpenAI API key is not configured');
+    if (!openai) {
+      throw new Error("OpenAI API key is not configured");
     }
 
     console.log("Starting job description analysis");
@@ -28,7 +32,8 @@ export async function analyzeJobDescription(description: string): Promise<ATSAna
       messages: [
         {
           role: "system",
-          content: "You are an expert ATS (Applicant Tracking System) analyzer. Analyze job descriptions and identify important keywords, skills, and provide recommendations for ATS optimization.",
+          content:
+            "You are an expert ATS (Applicant Tracking System) analyzer. Analyze job descriptions and identify important keywords, skills, and provide recommendations for ATS optimization.",
         },
         {
           role: "user",
@@ -50,14 +55,16 @@ export async function analyzeJobDescription(description: string): Promise<ATSAna
     });
 
     if (!response.choices[0].message.content) {
-      throw new Error('No response content received from OpenAI');
+      throw new Error("No response content received from OpenAI");
     }
 
-    const result = JSON.parse(response.choices[0].message.content) as ATSAnalysis;
+    const result = JSON.parse(
+      response.choices[0].message.content,
+    ) as ATSAnalysis;
     console.log("Analysis completed successfully", result);
     return result;
   } catch (error) {
-    console.error('Error analyzing job description:', error);
-    throw new Error('Failed to analyze job description');
+    console.error("Error analyzing job description:", error);
+    throw new Error("Failed to analyze job description");
   }
 }

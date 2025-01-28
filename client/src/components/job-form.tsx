@@ -67,7 +67,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
     resolver: zodResolver(jobSchema),
     defaultValues: {
       currentDate: today,
-      applicationDate: today,
+      applicationDate: today, // Set default application date to today
       ...(job ? {
         ...job,
         applicationDate: job.applicationDate ? new Date(job.applicationDate).toISOString().split("T")[0] : today,
