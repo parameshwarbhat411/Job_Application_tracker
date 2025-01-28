@@ -1,7 +1,13 @@
 import OpenAI from "openai";
 
+const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+if (!apiKey) {
+  console.error('OpenAI API key is not configured. ATS analysis will be disabled.');
+}
+
 const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  apiKey,
+  dangerouslyAllowBrowser: true // Required for client-side usage
 });
 
 export interface ATSAnalysis {
@@ -12,6 +18,10 @@ export interface ATSAnalysis {
 
 export async function analyzeJobDescription(description: string): Promise<ATSAnalysis> {
   try {
+    if (!apiKey) {
+      throw new Error('OpenAI API key is not configured');
+    }
+
     console.log("Starting job description analysis");
     const response = await openai.chat.completions.create({
       model: "gpt-4",
