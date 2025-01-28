@@ -108,12 +108,13 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       try {
         const analysis = await analyzeJobDescription(debouncedDescription);
         setAtsAnalysis(analysis);
-      } catch (error) {
+      } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Analysis Failed",
-          description: "Failed to analyze job description. Please try again later.",
+          description: error.message || "Failed to analyze job description. Please try again later.",
         });
+        console.error("ATS Analysis error:", error);
       } finally {
         setIsAnalyzing(false);
       }
