@@ -20,9 +20,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import type { Job } from "@db/schema";
+import { useState, useEffect } from 'react';
+import { ATSAnalysisDisplay } from "./ats-analysis";
+import { analyzeJobDescription, type ATSAnalysis } from "@/lib/ai-service";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const statusOptions = ["Not Started", "In Progress", "Completed", "Rejected"] as const;
 
@@ -34,14 +38,14 @@ const jobSchema = z.object({
   salaryMin: z.string().nullish(),
   salaryMax: z.string().nullish(),
   currentDate: z.string(),
-  applicationDate: z.string().nullish(),
-  interviewDate: z.string().nullish(),
-  recruiterStatus: z.enum(statusOptions).default("Not Started"),
-  referralStatus: z.enum(statusOptions).default("Not Started"),
-  assessmentStatus: z.enum(statusOptions).default("Not Started"),
-  interviewStatus: z.enum(statusOptions).default("Not Started"),
-  applicationStatus: z.enum(statusOptions).default("Not Started"),
-  notes: z.string().nullish(),
+  applicationDate: z.string(),
+  interviewDate: z.string().optional(),
+  recruiterStatus: z.enum(statusOptions),
+  referralStatus: z.enum(statusOptions),
+  assessmentStatus: z.enum(statusOptions),
+  interviewStatus: z.enum(statusOptions),
+  applicationStatus: z.enum(statusOptions),
+  notes: z.string().optional(),
 });
 
 type JobFormData = z.infer<typeof jobSchema>;
@@ -56,35 +60,67 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
   const queryClient = useQueryClient();
   const { user } = useUser();
   const today = new Date().toISOString().split("T")[0];
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [atsAnalysis, setAtsAnalysis] = useState<ATSAnalysis | null>(null);
 
   const form = useForm<JobFormData>({
     resolver: zodResolver(jobSchema),
-    defaultValues: job ? {
-      ...job,
+    defaultValues: {
       currentDate: today,
-      applicationDate: job.applicationDate ? new Date(job.applicationDate).toISOString().split("T")[0] : undefined,
-      location: job.location || "",
-      salaryMin: job.salaryMin?.toString() || "",
-      salaryMax: job.salaryMax?.toString() || "",
-      jobDescription: job.jobDescription || "",
-      notes: job.notes || "",
-      interviewDate: job.interviewDate ? new Date(job.interviewDate).toISOString().split("T")[0] : undefined,
-    } : {
-      currentDate: today,
-      applicationDate: today, 
-      recruiterStatus: "Not Started",
-      referralStatus: "Not Started",
-      assessmentStatus: "Not Started",
-      interviewStatus: "Not Started",
-      applicationStatus: "Not Started",
-      location: "",
-      salaryMin: "",
-      salaryMax: "",
-      jobDescription: "",
-      notes: "",
-      interviewDate: undefined,
+      applicationDate: today,
+      ...(job ? {
+        ...job,
+        applicationDate: job.applicationDate ? new Date(job.applicationDate).toISOString().split("T")[0] : today,
+        location: job.location ?? "",
+        salaryMin: job.salaryMin?.toString() ?? "",
+        salaryMax: job.salaryMax?.toString() ?? "",
+        jobDescription: job.jobDescription ?? "",
+        notes: job.notes ?? "",
+        interviewDate: job.interviewDate ? new Date(job.interviewDate).toISOString().split("T")[0] : undefined,
+      } : {
+        recruiterStatus: "Not Started" as const,
+        referralStatus: "Not Started" as const,
+        assessmentStatus: "Not Started" as const,
+        interviewStatus: "Not Started" as const,
+        applicationStatus: "Not Started" as const,
+        companyName: "",
+        jobTitle: "",
+        location: "",
+        salaryMin: "",
+        salaryMax: "",
+        jobDescription: "",
+        notes: "",
+      }),
     },
   });
+
+  const jobDescription = useWatch({ name: "jobDescription", control: form.control });
+  const debouncedDescription = useDebounce(jobDescription, 1000);
+
+  useEffect(() => {
+    async function analyzeDescription() {
+      if (!debouncedDescription || debouncedDescription.length < 50) {
+        setAtsAnalysis(null);
+        return;
+      }
+
+      setIsAnalyzing(true);
+      try {
+        const analysis = await analyzeJobDescription(debouncedDescription);
+        setAtsAnalysis(analysis);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Analysis Failed",
+          description: "Failed to analyze job description. Please try again later.",
+        });
+      } finally {
+        setIsAnalyzing(false);
+      }
+    }
+
+    analyzeDescription();
+  }, [debouncedDescription, toast]);
 
   const mutation = useMutation({
     mutationFn: async (data: JobFormData) => {
@@ -128,7 +164,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
       if (!job) {
         form.reset({
           currentDate: today,
-          applicationDate: today, 
+          applicationDate: today,
           recruiterStatus: "Not Started",
           referralStatus: "Not Started",
           assessmentStatus: "Not Started",
@@ -140,6 +176,8 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
           notes: "",
           interviewDate: undefined,
           jobDescription: "",
+          companyName: "",
+          jobTitle: "",
         });
       }
       onSuccess?.();
@@ -256,7 +294,7 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
                   <Input
                     type="date"
                     {...field}
-                    value={field.value || today} 
+                    value={field.value || today}
                   />
                 </FormControl>
                 <FormMessage />
@@ -332,6 +370,11 @@ export function JobForm({ job, onSuccess }: JobFormProps) {
               <FormMessage />
             </FormItem>
           )}
+        />
+
+        <ATSAnalysisDisplay
+          analysis={atsAnalysis}
+          isLoading={isAnalyzing}
         />
 
         <FormField
