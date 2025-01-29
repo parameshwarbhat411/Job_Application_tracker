@@ -183,11 +183,11 @@ export function registerRoutes(app: Express): Server {
         const searchStrategies = [
           {
             person_titles: ["recruiter", "talent acquisition", "recruiting", "technical recruiter"],
-            contact_email_status: ["verified"]
+            contact_email_status: ["verified"],
           },
           {
             person_titles: ["hr", "human resources", "talent", "sourcer"],
-            contact_email_status: ["verified"]
+            contact_email_status: ["verified"],
           }
         ];
 
