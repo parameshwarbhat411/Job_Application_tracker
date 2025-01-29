@@ -121,7 +121,7 @@ export function registerRoutes(app: Express): Server {
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache",
-          "Api-Key": process.env.APOLLO_API_KEY,
+          "X-Api-Key": process.env.APOLLO_API_KEY,
         },
         body: JSON.stringify({
           q_organization_name: companyName,
@@ -157,7 +157,7 @@ export function registerRoutes(app: Express): Server {
         headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache",
-          "Api-Key": process.env.APOLLO_API_KEY,
+          "X-Api-Key": process.env.APOLLO_API_KEY,
         },
         body: JSON.stringify({
           q_organization_domains: [domain],
