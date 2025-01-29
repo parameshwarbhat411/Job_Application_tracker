@@ -124,7 +124,7 @@ export function registerRoutes(app: Express): Server {
 
         console.log(`Searching for company: ${processedCompanyName}`);
 
-        const companySearchResponse = await fetch("https://api.apollo.io/v1/mixed_companies/search", {
+        const companySearchResponse = await fetch("https://api.apollo.io/api/v1/mixed_companies/search", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -181,24 +181,14 @@ export function registerRoutes(app: Express): Server {
 
         const searchBody = {
           q_organization_domains: [domain],
-          person_titles: [
-            "recruiter",
-            "talent acquisition",
-            "recruiting",
-            "technical recruiter",
-            "sourcer",
-            "talent"
-          ],
-          person_locations: ["united states"],
-          organization_locations: ["united states"],
-          contact_email_status: ["verified", "likely to engage"],
+          person_titles: ["recruiter"],
           page: 1,
           per_page: 25
         };
 
         console.log("Search request body:", JSON.stringify(searchBody, null, 2));
 
-        const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
+        const recruiterSearchResponse = await fetch("https://api.apollo.io/api/v1/mixed_people/search", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -228,8 +218,8 @@ export function registerRoutes(app: Express): Server {
 
         // Format recruiter data
         const recruiters = recruiterData.people
-          .filter(person => person && (person.email || person.linkedin_url))
-          .map(person => ({
+          .filter((person: any) => person && (person.email || person.linkedin_url))
+          .map((person: any) => ({
             name: `${person.first_name} ${person.last_name}`,
             title: person.title,
             email: person.email,

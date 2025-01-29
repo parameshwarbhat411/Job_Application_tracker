@@ -1,0 +1,83 @@
+const API_KEY = "Q1GMi25lKiUOWGkYdqePcQ";
+
+// Test 1: Basic Search
+const basicSearchBody = {
+  q_organization_domains: ["microsoft.com"], // Target company domain
+  person_titles: ["recruiter"],             // Just one title to test
+  page: 1,
+  per_page: 25
+};
+
+// Test 2: Comprehensive Search
+const comprehensiveSearchBody = {
+  q_organization_domains: ["microsoft.com"],
+  person_titles: [
+    "recruiter",
+    "talent acquisition",
+    "recruiting",
+    "technical recruiter"
+  ],
+  person_locations: ["united states"],    // Filters by personal location
+  organization_locations: ["united states"], // Filters by company HQ location
+  contact_email_status: ["verified", "likely to engage"], // Only those with email
+  page: 1,
+  per_page: 25
+};
+
+const API_URL = "https://api.apollo.io/api/v1/mixed_people/search";
+const headers = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-cache",
+  "X-Api-Key": API_KEY
+};
+
+// Test Basic Search
+async function testBasicSearch() {
+  try {
+    console.log("Testing basic search with body:", JSON.stringify(basicSearchBody, null, 2));
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(basicSearchBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+    console.log("Basic search results:", JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error("Basic search error:", error);
+  }
+}
+
+// Test Comprehensive Search
+async function testComprehensiveSearch() {
+  try {
+    console.log("Testing comprehensive search with body:", JSON.stringify(comprehensiveSearchBody, null, 2));
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(comprehensiveSearchBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+    console.log("Comprehensive search results:", JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error("Comprehensive search error:", error);
+  }
+}
+
+// Run both tests in sequence
+async function runTests() {
+  console.log("Running Basic Search Test...");
+  await testBasicSearch();
+
+  console.log("\nRunning Comprehensive Search Test...");
+  await testComprehensiveSearch();
+}
+
+runTests().catch((err) => console.error("Error running tests:", err));

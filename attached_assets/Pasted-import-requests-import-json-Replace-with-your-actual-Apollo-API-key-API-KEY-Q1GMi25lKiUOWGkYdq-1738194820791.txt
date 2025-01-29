@@ -1,0 +1,89 @@
+import requests
+import json
+
+# Replace with your actual Apollo API key
+API_KEY = "Q1GMi25lKiUOWGkYdqePcQ"
+
+# Test 1: Basic Search
+basicSearchBody = {
+    "q_organization_domains": ["microsoft.com"],    # Target company domain
+    "person_titles": ["recruiter"],                # Single title
+    "page": 1,
+    "per_page": 25
+}
+
+# Test 2: Comprehensive Search
+# This matches the spirit of your working query:
+#   ?person_titles[]=recruiter&person_titles[]=talent%20acquisition&person_titles[]=human%20resources
+#   &person_locations[]=United%20States
+#   &q_organization_domains=microsoft.com
+comprehensiveSearchBody = {
+    "q_organization_domains": ["microsoft.com"],
+    "person_titles": [
+        "recruiter",
+        "talent acquisition",
+        "human resources"
+    ],
+    "person_locations": ["United States"],
+    "page": 1,
+    "per_page": 25
+}
+
+# If you want to include your other filters, feel free to add them back:
+#   "contact_email_status": ["verified", "likely to engage"],
+#   "organization_locations": ["United States"],
+#   ...
+
+# API Configuration
+API_URL = "https://api.apollo.io/v1/mixed_people/search"
+headers = {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-cache",
+    "X-Api-Key": API_KEY
+}
+
+def testBasicSearch():
+    """Send the basic search request and return JSON response."""
+    try:
+        print("Testing basic search with body:")
+        print(json.dumps(basicSearchBody, indent=2))
+        response = requests.post(API_URL, headers=headers, json=basicSearchBody)
+
+        # Check for HTTP errors
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as error:
+        print("Basic search error:", error)
+        raise
+
+def testComprehensiveSearch():
+    """Send the comprehensive search request and return JSON response."""
+    try:
+        print("Testing comprehensive search with body:")
+        print(json.dumps(comprehensiveSearchBody, indent=2))
+        response = requests.post(API_URL, headers=headers, json=comprehensiveSearchBody)
+
+        # Check for HTTP errors
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as error:
+        print("Comprehensive search error:", error)
+        raise
+
+def runTests():
+    """Run both the basic and comprehensive tests."""
+    print("Running Basic Search Test...")
+    basicResults = testBasicSearch()
+    print("Basic search results:")
+    print(json.dumps(basicResults, indent=2))
+
+    print("\nRunning Comprehensive Search Test...")
+    comprehensiveResults = testComprehensiveSearch()
+    print("Comprehensive search results:")
+    print(json.dumps(comprehensiveResults, indent=2))
+
+if __name__ == "__main__":
+    try:
+        runTests()
+    except Exception as e:
+        print("An error occurred while running the tests:", e)
