@@ -1,0 +1,132 @@
+People Search
+post
+https://api.apollo.io/api/v1/mixed_people/search
+Use the People Search endpoint to find people in the Apollo database. Several filters are available to help narrow your search.
+
+Calling this endpoint does consume credits as part of your Apollo pricing plan. This feature is not accessible to Apollo users on free plans.
+
+This endpoint does not return new email addresses or phone numbers. Use the People Enrichment or Bulk People Enrichment endpoints to enrich data.
+
+To protect Apollo's performance for all users, this endpoint has a display limit of 50,000 records (100 records per page, up to 500 pages). Add more filters to narrow your search results as much as possible. This limitation does not restrict your access to Apollo's database; you just need to access the data in batches.
+
+Query Params
+person_titles[]
+array of strings
+Job titles held by the people you want to find. For a person to be included in search results, they only need to match 1 of the job titles you add. Adding more job titles expands your search results.
+
+Results also include job titles with the same terms, even if they are not exact matches. For example, searching for marketing manager might return people with the job title content marketing manager.
+
+Use this parameter in combination with the person_seniorities[] parameter to find people based on specific job functions and seniority levels.
+
+Examples: sales development representative; marketing manager; research analyst
+
+
+ADD string
+person_locations[]
+array of strings
+The location where people live. You can search across cities, US states, and countries.
+
+To find people based on the headquarters locations of their current employer, use the organization_locations parameter.
+
+Examples: california; ireland; chicago
+
+
+ADD string
+person_seniorities[]
+array of strings
+The job seniority that people hold within their current employer. This enables you to find people that currently hold positions at certain reporting levels, such as Director level or senior IC level.
+
+For a person to be included in search results, they only need to match 1 of the seniorities you add. Adding more seniorities expands your search results.
+
+Searches only return results based on their current job title, so searching for Director-level employees only returns people that currently hold a Director-level title. If someone was previously a Director, but is currently a VP, they would not be included in your search results.
+
+Use this parameter in combination with the person_titles[] parameter to find people based on specific job functions and seniority levels.
+
+The following options can be used for this parameter:
+
+owner
+founder
+c_suite
+partner
+vp
+head
+director
+manager
+senior
+entry
+intern
+
+ADD string
+organization_locations[]
+array of strings
+The location of the company headquarters for a person's current employer. You can search across cities, US states, and countries.
+
+If a company has several office locations, results are still based on the headquarters location. For example, if you search chicago but a company's HQ location is in boston, people that work for the Boston-based company will not appear in your results, even if they match other \parameters.
+
+To find people based on their personal location, use the person_locations parameter.
+
+Examples: texas; tokyo; spain
+
+
+ADD string
+q_organization_domains
+array of strings
+The domain name for the person's employer. This can be the current employer or a previous employer. Do not include www., the @ symbol, or similar.
+
+You can add multiple domains to search across companies.
+
+Examples: apollo.io and microsoft.com
+
+
+ADD string
+contact_email_status[]
+array of strings
+The email statuses for the people you want to find. You can add multiple statuses to expand your search.
+
+The statuses you can search include:
+
+verified
+unverified
+likely to engage
+unavailable
+
+ADD string
+organization_ids[]
+array of strings
+The Apollo IDs for the companies (employers) you want to include in your search results. Each company in the Apollo database is assigned a unique ID.
+
+To find IDs, call the Organization Search endpoint and identify the values for organization_id.
+
+Example: 5e66b6381e05b4008c8331b8
+
+
+ADD string
+organization_num_employees_ranges[]
+array of strings
+The number range of employees working for the person's current company. This enables you to find people based on the headcount of their employer. You can add multiple ranges to expand your search results.
+
+Each range you add needs to be a string, with the upper and lower numbers of the range separated only by a comma.
+
+Examples: 1,10; 250,500; 10000,20000
+
+
+ADD string
+q_keywords
+string
+A string of words over which we want to filter the results
+
+page
+int32
+The page number of the Apollo data that you want to retrieve.
+
+Use this parameter in combination with the per_page parameter to make search results for navigable and improve the performance of the endpoint.
+
+Example: 4
+
+per_page
+int32
+The number of search results that should be returned for each page. Limited the number of results per page improves the endpoint's performance.
+
+Use the page parameter to search the different pages of data.
+
+Example: 10

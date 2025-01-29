@@ -118,7 +118,6 @@ export function registerRoutes(app: Express): Server {
           return res.status(400).json({ error: "Company name is required" });
         }
 
-        // Preprocess company name - remove any special characters and extra spaces
         const processedCompanyName = companyName.trim()
           .replace(/[^\w\s]/g, '')
           .replace(/\s+/g, ' ');
@@ -180,63 +179,94 @@ export function registerRoutes(app: Express): Server {
 
         console.log(`Searching recruiters for domain: ${domain}`);
 
-        // Use a more comprehensive search for recruiters
-        const recruiterTitles = [
-          "recruiter",
-          "talent acquisition",
-          "recruiting",
-          "hr manager",
-          "human resources",
-          "talent",
-          "technical recruiter",
-          "sourcer",
-          "recruitment",
-          "hiring",
-          "hr business partner",
-          "people operations"
+        // Use multiple search strategies
+        const searchStrategies = [
+          {
+            person_titles: [
+              "recruiter",
+              "talent acquisition",
+              "recruiting",
+              "technical recruiter"
+            ],
+            seniority: ["manager", "director", "senior"]
+          },
+          {
+            person_titles: [
+              "hr manager",
+              "human resources",
+              "talent",
+              "sourcer"
+            ],
+            seniority: ["manager", "director", "senior"]
+          },
+          {
+            person_titles: [
+              "recruitment",
+              "hiring",
+              "hr business partner",
+              "people operations"
+            ]
+          }
         ];
 
-        const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
-            "X-Api-Key": process.env.APOLLO_API_KEY,
-          },
-          body: JSON.stringify({
-            q_organization_domains: [domain],
-            person_titles: recruiterTitles,
-            page: 1,
-            per_page: 25, // Increased from 10 to get more results
-          }),
-        });
+        let allRecruiters: any[] = [];
 
-        if (!recruiterSearchResponse.ok) {
-          const errorText = await recruiterSearchResponse.text();
-          console.error("Apollo API Error (recruiter search):", {
-            status: recruiterSearchResponse.status,
-            statusText: recruiterSearchResponse.statusText,
-            response: errorText
+        // Try each search strategy
+        for (const strategy of searchStrategies) {
+          const searchBody: any = {
+            q_organization_domains: [domain],
+            person_titles: strategy.person_titles,
+            page: 1,
+            per_page: 25
+          };
+
+          if (strategy.seniority) {
+            searchBody.person_seniorities = strategy.seniority;
+          }
+
+          const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache",
+              "X-Api-Key": process.env.APOLLO_API_KEY,
+            },
+            body: JSON.stringify(searchBody),
           });
-          throw new Error(`Apollo API error: ${recruiterSearchResponse.status} ${recruiterSearchResponse.statusText}`);
+
+          if (!recruiterSearchResponse.ok) {
+            console.error("Apollo API Error (recruiter search):", {
+              status: recruiterSearchResponse.status,
+              statusText: recruiterSearchResponse.statusText,
+            });
+            continue; // Try next strategy instead of failing
+          }
+
+          const recruiterData = await recruiterSearchResponse.json();
+          console.log("Recruiter search response:", JSON.stringify(recruiterData, null, 2));
+
+          if (recruiterData.people?.length) {
+            allRecruiters = allRecruiters.concat(recruiterData.people);
+          }
         }
 
-        const recruiterData = await recruiterSearchResponse.json();
-        console.log("Recruiter search response:", JSON.stringify(recruiterData, null, 2));
-
-        const recruiters = recruiterData.people?.map((person: any) => ({
-          name: `${person.first_name} ${person.last_name}`,
-          title: person.title,
-          email: person.email,
-          linkedin_url: person.linkedin_url,
-          organization_name: person.organization_name,
-        })).filter(recruiter => recruiter.email || recruiter.linkedin_url) || [];
+        // Remove duplicates and format recruiter data
+        const uniqueRecruiters = Array.from(new Set(allRecruiters.map(r => r.email)))
+          .map(email => allRecruiters.find(r => r.email === email))
+          .filter(person => person && (person.email || person.linkedin_url))
+          .map(person => ({
+            name: `${person.first_name} ${person.last_name}`,
+            title: person.title,
+            email: person.email,
+            linkedin_url: person.linkedin_url,
+            organization_name: person.organization_name,
+          }));
 
         return res.json({
-          message: recruiters.length ?
-            `Found ${recruiters.length} recruiters` :
+          message: uniqueRecruiters.length ?
+            `Found ${uniqueRecruiters.length} recruiters` :
             `No recruiters found for the selected company. Try another domain or company.`,
-          recruiters
+          recruiters: uniqueRecruiters
         });
       }
 
