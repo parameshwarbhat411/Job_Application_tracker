@@ -152,139 +152,134 @@ export function JobCard({ job }: { job: Job }) {
 
       {/* Edit dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl w-[90vw] p-6">
           <JobForm job={job} onSuccess={() => setIsEditOpen(false)} />
         </DialogContent>
       </Dialog>
 
       {/* Detailed view in dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="sm:max-w-3xl w-[90vw] max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>{job.jobTitle} at {job.companyName}</DialogTitle>
           </DialogHeader>
-          <div className="mt-4 space-y-6">
-            {/* Basic Information */}
-            <motion.div 
-              className="grid grid-cols-2 gap-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div>
-                <p className="text-sm text-gray-500">Location</p>
-                <p>{job.location || "Not specified"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Application Date</p>
-                <p>{format(new Date(job.applicationDate), "MMM d, yyyy")}</p>
-              </div>
-              {(job.salaryMin || job.salaryMax) && (
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-500">Salary Range</p>
-                  <p>
-                    {job.salaryMin && `$${job.salaryMin}`}
-                    {job.salaryMin && job.salaryMax && " - "}
-                    {job.salaryMax && `$${job.salaryMax}`}
-                  </p>
-                </div>
-              )}
-            </motion.div>
-
-            {/* Application Progress */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <h4 className="text-sm font-semibold mb-2">Application Progress</h4>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-muted-foreground">Overall Progress</span>
-                <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
-              </div>
-              <Progress value={progress} className="h-2 mb-4" />
-            </motion.div>
-
-            {/* Status Details */}
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries({
-                Recruiter: job.recruiterStatus,
-                Referral: job.referralStatus,
-                Assessment: job.assessmentStatus,
-                Interview: job.interviewStatus,
-                Application: job.applicationStatus,
-              }).map(([label, status], index) => {
-                const colors = statusColors[status];
-                return (
-                  <motion.div
-                    key={label}
-                    className="relative"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                  >
-                    <p className="text-sm text-gray-500 mb-1">{label}</p>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${colors.dot}`} />
-                      <span className={`inline-block px-2 py-1 rounded-full text-sm ${colors.bg} ${colors.text}`}>
-                        {status}
-                      </span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Additional Details */}
-            <motion.div 
-              className="space-y-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              {job.jobDescription && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Job Description</p>
-                  <p className="text-sm whitespace-pre-wrap">{job.jobDescription}</p>
-                </div>
-              )}
-
-              {job.nextSteps && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Next Steps</p>
-                  <p className="text-sm">{job.nextSteps}</p>
-                </div>
-              )}
-
-              {job.notes && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Notes</p>
-                  <p className="text-sm whitespace-pre-wrap">{job.notes}</p>
-                </div>
-              )}
-            </motion.div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-2 mt-6">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsDetailsOpen(false)}
+          <div className="flex-1 overflow-y-auto pr-6 -mr-6">
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <motion.div 
+                className="grid grid-cols-2 gap-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
               >
-                Close
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  deleteMutation.mutate();
-                  setIsDetailsOpen(false);
-                }}
+                <div>
+                  <p className="text-sm text-gray-500">Location</p>
+                  <p>{job.location || "Not specified"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Application Date</p>
+                  <p>{format(new Date(job.applicationDate), "MMM d, yyyy")}</p>
+                </div>
+                {(job.salaryMin || job.salaryMax) && (
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-500">Salary Range</p>
+                    <p>
+                      {job.salaryMin && `$${job.salaryMin}`}
+                      {job.salaryMin && job.salaryMax && " - "}
+                      {job.salaryMax && `$${job.salaryMax}`}
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Application Progress */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
               >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete
-              </Button>
+                <h4 className="text-sm font-semibold mb-2">Application Progress</h4>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-muted-foreground">Overall Progress</span>
+                  <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} className="h-2 mb-4" />
+              </motion.div>
+
+              {/* Status Details */}
+              <div className="grid grid-cols-2 gap-4">
+                {Object.entries({
+                  Recruiter: job.recruiterStatus,
+                  Referral: job.referralStatus,
+                  Assessment: job.assessmentStatus,
+                  Interview: job.interviewStatus,
+                  Application: job.applicationStatus,
+                }).map(([label, status], index) => {
+                  const colors = statusColors[status];
+                  return (
+                    <motion.div
+                      key={label}
+                      className="relative"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <p className="text-sm text-gray-500 mb-1">{label}</p>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${colors.dot}`} />
+                        <span className={`inline-block px-2 py-1 rounded-full text-sm ${colors.bg} ${colors.text}`}>
+                          {status}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Additional Details */}
+              <motion.div 
+                className="space-y-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                {job.jobDescription && (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Job Description</p>
+                    <p className="text-sm whitespace-pre-wrap">{job.jobDescription}</p>
+                  </div>
+                )}
+
+                {job.notes && (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Notes</p>
+                    <p className="text-sm whitespace-pre-wrap">{job.notes}</p>
+                  </div>
+                )}
+              </motion.div>
             </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-2 pt-6 border-t mt-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDetailsOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                deleteMutation.mutate();
+                setIsDetailsOpen(false);
+              }}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
