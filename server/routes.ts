@@ -179,58 +179,55 @@ export function registerRoutes(app: Express): Server {
 
         console.log(`Searching recruiters for domain: ${domain}`);
 
-        // Try each search strategy
-        const searchStrategies = [
-          {
-            person_titles: ["recruiter", "talent acquisition", "recruiting", "technical recruiter"],
-            contact_email_status: ["verified"],
+        const searchBody = {
+          q_organization_domains: [domain],
+          person_titles: [
+            "recruiter",
+            "talent acquisition",
+            "recruiting",
+            "technical recruiter",
+            "sourcer",
+            "talent"
+          ],
+          person_locations: ["united states"],
+          organization_locations: ["united states"],
+          contact_email_status: ["verified", "likely to engage"],
+          page: 1,
+          per_page: 25
+        };
+
+        console.log("Search request body:", JSON.stringify(searchBody, null, 2));
+
+        const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            "X-Api-Key": process.env.APOLLO_API_KEY,
           },
-          {
-            person_titles: ["hr", "human resources", "talent", "sourcer"],
-            contact_email_status: ["verified"],
-          }
-        ];
+          body: JSON.stringify(searchBody),
+        });
 
-        let allRecruiters: any[] = [];
-
-        for (const strategy of searchStrategies) {
-          const searchBody = {
-            q_organization_domains: [domain],
-            person_titles: strategy.person_titles,
-            contact_email_status: strategy.contact_email_status,
-            page: 1,
-            per_page: 25
-          };
-
-          const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Cache-Control": "no-cache",
-              "X-Api-Key": process.env.APOLLO_API_KEY,
-            },
-            body: JSON.stringify(searchBody),
+        if (!recruiterSearchResponse.ok) {
+          console.error("Apollo API Error:", {
+            status: recruiterSearchResponse.status,
+            statusText: recruiterSearchResponse.statusText,
           });
-
-          if (!recruiterSearchResponse.ok) {
-            console.error("Apollo API Error (recruiter search):", {
-              status: recruiterSearchResponse.status,
-              statusText: recruiterSearchResponse.statusText,
-            });
-            continue; // Try next strategy instead of failing
-          }
-
-          const recruiterData = await recruiterSearchResponse.json();
-          console.log("Recruiter search response:", JSON.stringify(recruiterData, null, 2));
-
-          if (recruiterData.people?.length) {
-            allRecruiters = allRecruiters.concat(recruiterData.people);
-          }
+          throw new Error(`Apollo API error: ${recruiterSearchResponse.status} ${recruiterSearchResponse.statusText}`);
         }
 
-        // Remove duplicates and format recruiter data
-        const uniqueRecruiters = Array.from(new Set(allRecruiters.map(r => r.email)))
-          .map(email => allRecruiters.find(r => r.email === email))
+        const recruiterData = await recruiterSearchResponse.json();
+        console.log("Recruiter search response:", JSON.stringify(recruiterData, null, 2));
+
+        if (!recruiterData.people?.length) {
+          return res.json({
+            message: "No recruiters found for the selected company. Try another domain or company.",
+            recruiters: []
+          });
+        }
+
+        // Format recruiter data
+        const recruiters = recruiterData.people
           .filter(person => person && (person.email || person.linkedin_url))
           .map(person => ({
             name: `${person.first_name} ${person.last_name}`,
@@ -241,10 +238,8 @@ export function registerRoutes(app: Express): Server {
           }));
 
         return res.json({
-          message: uniqueRecruiters.length ?
-            `Found ${uniqueRecruiters.length} recruiters` :
-            `No recruiters found for the selected company. Try another domain or company.`,
-          recruiters: uniqueRecruiters
+          message: `Found ${recruiters.length} recruiters`,
+          recruiters
         });
       }
 
