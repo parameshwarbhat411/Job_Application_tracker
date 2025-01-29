@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Mail, Linkedin, Search, Building } from "lucide-react";
+import { Loader2, Mail, Linkedin, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Company {
@@ -79,7 +79,7 @@ export function RecruiterSearch() {
   } = useQuery<SearchResponse>({
     queryKey: ["/api/search-recruiters/recruiters", selectedDomain],
     queryFn: async () => {
-      if (!selectedDomain) return null;
+      console.log("Searching recruiters for domain:", selectedDomain);
 
       const response = await fetch("/api/search-recruiters", {
         method: "POST",
@@ -97,7 +97,9 @@ export function RecruiterSearch() {
         throw new Error(error.error || "Failed to search recruiters");
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log("Recruiter search response:", data);
+      return data;
     },
     enabled: false,
     retry: false,
@@ -127,7 +129,8 @@ export function RecruiterSearch() {
     }
   }, [companyName, searchCompanies, toast]);
 
-  const handleDomainSelect = async (domain: string) => {
+  const handleDomainSelect = useCallback(async (domain: string) => {
+    console.log("Selected domain:", domain);
     setSelectedDomain(domain);
     try {
       await searchRecruiters();
@@ -138,7 +141,7 @@ export function RecruiterSearch() {
         description: err.message || "Failed to search recruiters",
       });
     }
-  };
+  }, [searchRecruiters, toast]);
 
   const companies = companyData?.companies || [];
   const recruiters = recruiterData?.recruiters || [];
@@ -203,9 +206,9 @@ export function RecruiterSearch() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDomainSelect(company.domain)}
-                        disabled={selectedDomain === company.domain}
+                        disabled={isLoadingRecruiters}
                       >
-                        {selectedDomain === company.domain ? (
+                        {isLoadingRecruiters && selectedDomain === company.domain ? (
                           <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         ) : (
                           'Select'
