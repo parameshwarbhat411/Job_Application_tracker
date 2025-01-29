@@ -44,7 +44,6 @@ const statusColors: Record<string, { bg: string; text: string; dot: string }> = 
   },
 };
 
-// calculateProgress function remains unchanged...
 function calculateProgress(job: Job): number {
   const statuses = [
     job.recruiterStatus,
@@ -62,7 +61,7 @@ function calculateProgress(job: Job): number {
   };
 
   const totalProgress = statuses.reduce(
-    (sum, status) => sum + weightedScores[status],
+    (sum, status) => sum + (weightedScores[status as keyof typeof weightedScores] || 0),
     0
   );
 
@@ -110,7 +109,6 @@ export function JobCard({ job }: { job: Job }) {
     },
   });
 
-  // Compact tile view
   return (
     <>
       <motion.div
@@ -165,7 +163,8 @@ export function JobCard({ job }: { job: Job }) {
           <DialogHeader>
             <DialogTitle>{job.jobTitle} at {job.companyName}</DialogTitle>
           </DialogHeader>
-          <div className="mt-4">
+          <div className="mt-4 space-y-6">
+            {/* Basic Information */}
             <motion.div 
               className="grid grid-cols-2 gap-4"
               initial={{ opacity: 0 }}
@@ -180,18 +179,34 @@ export function JobCard({ job }: { job: Job }) {
                 <p className="text-sm text-gray-500">Application Date</p>
                 <p>{format(new Date(job.applicationDate), "MMM d, yyyy")}</p>
               </div>
-              {job.salaryMin && job.salaryMax && (
+              {(job.salaryMin || job.salaryMax) && (
                 <div className="col-span-2">
                   <p className="text-sm text-gray-500">Salary Range</p>
                   <p>
-                    ${job.salaryMin} - ${job.salaryMax}
+                    {job.salaryMin && `$${job.salaryMin}`}
+                    {job.salaryMin && job.salaryMax && " - "}
+                    {job.salaryMax && `$${job.salaryMax}`}
                   </p>
                 </div>
               )}
             </motion.div>
 
-            {/* Status grid */}
-            <div className="grid grid-cols-2 gap-4 mt-6">
+            {/* Application Progress */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <h4 className="text-sm font-semibold mb-2">Application Progress</h4>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-muted-foreground">Overall Progress</span>
+                <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
+              </div>
+              <Progress value={progress} className="h-2 mb-4" />
+            </motion.div>
+
+            {/* Status Details */}
+            <div className="grid grid-cols-2 gap-4">
               {Object.entries({
                 Recruiter: job.recruiterStatus,
                 Referral: job.referralStatus,
@@ -220,18 +235,36 @@ export function JobCard({ job }: { job: Job }) {
               })}
             </div>
 
-            {job.notes && (
-              <motion.div 
-                className="mt-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                <p className="text-sm text-gray-500 mb-1">Notes</p>
-                <p className="text-sm">{job.notes}</p>
-              </motion.div>
-            )}
+            {/* Additional Details */}
+            <motion.div 
+              className="space-y-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              {job.jobDescription && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Job Description</p>
+                  <p className="text-sm whitespace-pre-wrap">{job.jobDescription}</p>
+                </div>
+              )}
 
+              {job.nextSteps && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Next Steps</p>
+                  <p className="text-sm">{job.nextSteps}</p>
+                </div>
+              )}
+
+              {job.notes && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Notes</p>
+                  <p className="text-sm whitespace-pre-wrap">{job.notes}</p>
+                </div>
+              )}
+            </motion.div>
+
+            {/* Action Buttons */}
             <div className="flex justify-end gap-2 mt-6">
               <Button
                 variant="outline"
