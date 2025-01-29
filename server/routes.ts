@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { db } from "@db";
 import { jobs } from "@db/schema";
 import { eq } from "drizzle-orm";
+import fetch from "node-fetch";
 
 export function registerRoutes(app: Express): Server {
   app.get("/api/jobs", async (req, res) => {
@@ -100,6 +101,73 @@ export function registerRoutes(app: Express): Server {
     } catch (error: any) {
       console.error('Error deleting job:', error);
       res.status(500).send(error.message || "Failed to delete job");
+    }
+  });
+
+  app.post("/api/search-recruiters", async (req, res) => {
+    try {
+      const { companyName } = req.body;
+      if (!companyName) {
+        return res.status(400).json({ error: "Company name is required" });
+      }
+
+      // First, search for the company to get its domain
+      const companySearchResponse = await fetch("https://api.apollo.io/v1/mixed_companies/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Api-Key": process.env.APOLLO_API_KEY!,
+        },
+        body: JSON.stringify({
+          q_organization_name: companyName,
+          page: 1,
+          per_page: 1,
+        }),
+      });
+
+      if (!companySearchResponse.ok) {
+        throw new Error("Failed to search company");
+      }
+
+      const companyData = await companySearchResponse.json();
+      if (!companyData.organizations?.[0]?.primary_domain) {
+        return res.json([]);
+      }
+
+      const domain = companyData.organizations[0].primary_domain;
+
+      // Now search for recruiters at this company
+      const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Api-Key": process.env.APOLLO_API_KEY!,
+        },
+        body: JSON.stringify({
+          q_organization_domains: [domain],
+          person_titles: ["recruiter", "talent acquisition", "hr manager"],
+          page: 1,
+          per_page: 10,
+        }),
+      });
+
+      if (!recruiterSearchResponse.ok) {
+        throw new Error("Failed to search recruiters");
+      }
+
+      const recruiterData = await recruiterSearchResponse.json();
+      const recruiters = recruiterData.people?.map((person: any) => ({
+        name: `${person.first_name} ${person.last_name}`,
+        title: person.title,
+        email: person.email,
+        linkedin_url: person.linkedin_url,
+        organization_name: person.organization_name,
+      })) || [];
+
+      res.json(recruiters);
+    } catch (error: any) {
+      console.error("Error searching recruiters:", error);
+      res.status(500).json({ error: error.message || "Failed to search recruiters" });
     }
   });
 

@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Job } from "@db/schema";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { motion, AnimatePresence } from "framer-motion";
+import { RecruiterSearch } from "@/components/recruiter-search";
 
 const tabVariants = {
   initial: (direction: number) => ({
@@ -37,7 +38,8 @@ export default function Dashboard() {
   const tabToIndex = {
     list: 0,
     calendar: 1,
-    analytics: 2
+    analytics: 2,
+    recruiters: 3
   };
 
   const paginate = (newValue: string) => {
@@ -140,6 +142,7 @@ export default function Dashboard() {
                 <TabsTrigger value="list">List View</TabsTrigger>
                 <TabsTrigger value="calendar">Calendar View</TabsTrigger>
                 <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="recruiters">Find Recruiters</TabsTrigger>
               </TabsList>
             </motion.div>
 
@@ -169,6 +172,9 @@ export default function Dashboard() {
                   </div>
                   <div className={`h-full overflow-auto ${activeTab === "analytics" ? "block" : "hidden"}`}>
                     <JobAnalytics jobs={jobs} />
+                  </div>
+                  <div className={`h-full overflow-auto ${activeTab === "recruiters" ? "block" : "hidden"}`}>
+                    <RecruiterSearch />
                   </div>
                 </motion.div>
               </AnimatePresence>
