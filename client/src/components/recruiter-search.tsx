@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,13 +24,17 @@ interface Recruiter {
 
 export function RecruiterSearch() {
   const [companyName, setCompanyName] = useState("");
-  const [searchTrigger, setSearchTrigger] = useState(0);
   const { toast } = useToast();
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["/api/search-recruiters", companyName, searchTrigger],
+  const {
+    data,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ["/api/search-recruiters", companyName],
     queryFn: async () => {
-      if (!companyName) return null;
+      if (!companyName.trim()) return null;
 
       const response = await fetch("/api/search-recruiters", {
         method: "POST",
@@ -47,17 +51,12 @@ export function RecruiterSearch() {
 
       return response.json();
     },
-    enabled: !!companyName && searchTrigger > 0,
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    },
+    enabled: false, // Don't auto-fetch, we'll manually trigger with refetch
+    retry: false, // Don't retry on failure
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyName.trim()) {
       toast({
@@ -67,8 +66,16 @@ export function RecruiterSearch() {
       });
       return;
     }
-    setSearchTrigger(prev => prev + 1);
-  };
+    try {
+      await refetch();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Failed to search recruiters",
+      });
+    }
+  }, [companyName, refetch, toast]);
 
   const recruiters = data?.recruiters || [];
 
@@ -108,7 +115,7 @@ export function RecruiterSearch() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recruiters.map((recruiter, index) => (
+              {recruiters.map((recruiter: Recruiter, index: number) => (
                 <TableRow key={index}>
                   <TableCell className="font-medium">{recruiter.name}</TableCell>
                   <TableCell>{recruiter.title}</TableCell>
