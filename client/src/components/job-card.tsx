@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { JobForm } from "./job-form";
 
 // Status colors remain unchanged...
 const statusColors: Record<string, { bg: string; text: string; dot: string }> = {
@@ -73,6 +74,7 @@ export function JobCard({ job }: { job: Job }) {
   const { toast } = useToast();
   const { user } = useUser();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -116,24 +118,46 @@ export function JobCard({ job }: { job: Job }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
-        onClick={() => setIsDetailsOpen(true)}
       >
-        <Card className="cursor-pointer transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 h-32">
-          <CardContent className="p-4 h-full flex flex-col justify-between">
-            <div>
-              <h3 className="font-semibold text-lg truncate">{job.jobTitle}</h3>
-              <p className="text-sm text-muted-foreground truncate">{job.companyName}</p>
-            </div>
-            <div className="mt-2">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs text-muted-foreground">Progress</span>
-                <span className="text-xs text-muted-foreground">{Math.round(progress)}%</span>
+        <Card className="group cursor-pointer transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 h-32">
+          <CardContent className="p-4 h-full flex flex-col justify-between relative">
+            {/* Edit button - visible on hover */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditOpen(true);
+              }}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+
+            {/* Main content - clickable for details */}
+            <div onClick={() => setIsDetailsOpen(true)} className="h-full">
+              <div>
+                <h3 className="font-semibold text-lg truncate pr-8">{job.jobTitle}</h3>
+                <p className="text-sm text-muted-foreground truncate">{job.companyName}</p>
               </div>
-              <Progress value={progress} className="h-1" />
+              <div className="mt-2">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-xs text-muted-foreground">Progress</span>
+                  <span className="text-xs text-muted-foreground">{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} className="h-1" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Edit dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-3xl">
+          <JobForm job={job} onSuccess={() => setIsEditOpen(false)} />
+        </DialogContent>
+      </Dialog>
 
       {/* Detailed view in dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
