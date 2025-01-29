@@ -209,7 +209,10 @@ export function RecruiterSearch() {
                         disabled={isLoadingRecruiters}
                       >
                         {isLoadingRecruiters && selectedDomain === company.domain ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Searching...
+                          </>
                         ) : (
                           'Select'
                         )}
