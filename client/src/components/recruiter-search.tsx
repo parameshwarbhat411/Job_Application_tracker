@@ -11,8 +11,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Mail, Linkedin, Search } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, Mail, Linkedin, Search, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface Company {
+  name: string;
+  domain: string;
+  website_url?: string;
+  logo_url?: string;
+}
 
 interface Recruiter {
   name: string;
@@ -24,20 +38,21 @@ interface Recruiter {
 
 interface SearchResponse {
   message: string;
-  recruiters: Recruiter[];
+  companies?: Company[];
+  recruiters?: Recruiter[];
 }
 
 export function RecruiterSearch() {
   const [companyName, setCompanyName] = useState("");
+  const [selectedDomain, setSelectedDomain] = useState<string>("");
   const { toast } = useToast();
 
   const {
-    data,
-    isLoading,
-    error,
-    refetch
+    data: companyData,
+    isLoading: isLoadingCompanies,
+    refetch: searchCompanies
   } = useQuery<SearchResponse>({
-    queryKey: ["/api/search-recruiters", companyName],
+    queryKey: ["/api/search-recruiters/companies", companyName],
     queryFn: async () => {
       if (!companyName.trim()) return null;
 
@@ -46,7 +61,42 @@ export function RecruiterSearch() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ companyName: companyName.trim() }),
+        body: JSON.stringify({ 
+          companyName: companyName.trim(),
+          type: "company_search"
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to search companies");
+      }
+
+      return response.json();
+    },
+    enabled: false,
+    retry: false,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const {
+    data: recruiterData,
+    isLoading: isLoadingRecruiters,
+    refetch: searchRecruiters
+  } = useQuery<SearchResponse>({
+    queryKey: ["/api/search-recruiters/recruiters", selectedDomain],
+    queryFn: async () => {
+      if (!selectedDomain) return null;
+
+      const response = await fetch("/api/search-recruiters", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          domain: selectedDomain,
+          type: "recruiter_search"
+        }),
       });
 
       if (!response.ok) {
@@ -56,13 +106,15 @@ export function RecruiterSearch() {
 
       return response.json();
     },
-    enabled: false, // Don't auto-fetch, we'll manually trigger with refetch
-    retry: false, // Don't retry on failure
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    enabled: false,
+    retry: false,
+    staleTime: 1000 * 60 * 5,
   });
 
   const handleSearch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    setSelectedDomain("");  // Reset domain selection when searching new company
+
     if (!companyName.trim()) {
       toast({
         variant: "destructive",
@@ -72,7 +124,20 @@ export function RecruiterSearch() {
       return;
     }
     try {
-      await refetch();
+      await searchCompanies();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.message || "Failed to search companies",
+      });
+    }
+  }, [companyName, searchCompanies, toast]);
+
+  const handleDomainSelect = async (domain: string) => {
+    setSelectedDomain(domain);
+    try {
+      await searchRecruiters();
     } catch (err: any) {
       toast({
         variant: "destructive",
@@ -80,9 +145,11 @@ export function RecruiterSearch() {
         description: err.message || "Failed to search recruiters",
       });
     }
-  }, [companyName, refetch, toast]);
+  };
 
-  const recruiters = data?.recruiters || [];
+  const companies = companyData?.companies || [];
+  const recruiters = recruiterData?.recruiters || [];
+  const isLoading = isLoadingCompanies || isLoadingRecruiters;
 
   return (
     <Card className="p-6">
@@ -100,7 +167,7 @@ export function RecruiterSearch() {
           />
         </div>
         <Button type="submit" disabled={isLoading || !companyName.trim()}>
-          {isLoading ? (
+          {isLoadingCompanies ? (
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : null}
           Search
@@ -111,67 +178,112 @@ export function RecruiterSearch() {
         <div className="flex justify-center items-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : recruiters.length > 0 ? (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Contact</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recruiters.map((recruiter: Recruiter, index: number) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{recruiter.name}</TableCell>
-                  <TableCell>{recruiter.title}</TableCell>
-                  <TableCell>{recruiter.organization_name}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      {recruiter.email && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          asChild
-                          className="h-8 w-8"
-                        >
-                          <a
-                            href={`mailto:${recruiter.email}`}
-                            title="Send email"
-                          >
-                            <Mail className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      )}
-                      {recruiter.linkedin_url && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          asChild
-                          className="h-8 w-8"
-                        >
-                          <a
-                            href={recruiter.linkedin_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="View LinkedIn profile"
-                          >
-                            <Linkedin className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
+      ) : companies.length > 0 ? (
+        <div className="space-y-6">
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Domain</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {companies.map((company, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {company.logo_url && (
+                          <img
+                            src={company.logo_url}
+                            alt={company.name}
+                            className="w-6 h-6 rounded"
+                          />
+                        )}
+                        {company.name}
+                      </div>
+                    </TableCell>
+                    <TableCell>{company.domain}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDomainSelect(company.domain)}
+                        disabled={selectedDomain === company.domain}
+                      >
+                        {selectedDomain === company.domain ? 'Selected' : 'Select'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {recruiters.length > 0 && (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Company</TableHead>
+                    <TableHead>Contact</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recruiters.map((recruiter: Recruiter, index: number) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{recruiter.name}</TableCell>
+                      <TableCell>{recruiter.title}</TableCell>
+                      <TableCell>{recruiter.organization_name}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {recruiter.email && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              asChild
+                              className="h-8 w-8"
+                            >
+                              <a
+                                href={`mailto:${recruiter.email}`}
+                                title="Send email"
+                              >
+                                <Mail className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          )}
+                          {recruiter.linkedin_url && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              asChild
+                              className="h-8 w-8"
+                            >
+                              <a
+                                href={recruiter.linkedin_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="View LinkedIn profile"
+                              >
+                                <Linkedin className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
-      ) : data?.message ? (
+      ) : companyData?.message ? (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">{data.message}</p>
+          <p className="text-muted-foreground">{companyData.message}</p>
           <p className="text-sm text-muted-foreground mt-2">
             Try searching with a different company name or check the spelling
           </p>

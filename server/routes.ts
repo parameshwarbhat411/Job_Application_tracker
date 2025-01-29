@@ -36,10 +36,10 @@ export function registerRoutes(app: Express): Server {
       const jobData = {
         ...req.body,
         userId: userId,
-        applicationDate: req.body.applicationDate 
+        applicationDate: req.body.applicationDate
           ? new Date(req.body.applicationDate + 'T12:00:00.000Z')
           : null,
-        interviewDate: req.body.interviewDate 
+        interviewDate: req.body.interviewDate
           ? new Date(req.body.interviewDate + 'T12:00:00.000Z')
           : null,
         createdAt: new Date(),
@@ -66,10 +66,10 @@ export function registerRoutes(app: Express): Server {
 
       const jobData = {
         ...req.body,
-        applicationDate: req.body.applicationDate 
+        applicationDate: req.body.applicationDate
           ? new Date(req.body.applicationDate + 'T12:00:00.000Z')
           : null,
-        interviewDate: req.body.interviewDate 
+        interviewDate: req.body.interviewDate
           ? new Date(req.body.interviewDate + 'T12:00:00.000Z')
           : null,
         updatedAt: new Date()
@@ -106,114 +106,129 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/search-recruiters", async (req, res) => {
     try {
-      const { companyName } = req.body;
-      if (!companyName) {
-        return res.status(400).json({ error: "Company name is required" });
-      }
+      const { companyName, type, domain } = req.body;
 
       if (!process.env.APOLLO_API_KEY) {
         return res.status(500).json({ error: "Apollo API key is not configured" });
       }
 
-      // Preprocess company name - remove any special characters and extra spaces
-      const processedCompanyName = companyName.trim()
-        .replace(/[^\w\s]/g, '')
-        .replace(/\s+/g, ' ');
+      // Company Search
+      if (type === "company_search") {
+        if (!companyName) {
+          return res.status(400).json({ error: "Company name is required" });
+        }
 
-      console.log(`Searching for company: ${processedCompanyName}`);
+        // Preprocess company name - remove any special characters and extra spaces
+        const processedCompanyName = companyName.trim()
+          .replace(/[^\w\s]/g, '')
+          .replace(/\s+/g, ' ');
 
-      // First, search for the company to get its domain
-      const companySearchResponse = await fetch("https://api.apollo.io/v1/mixed_companies/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache",
-          "X-Api-Key": process.env.APOLLO_API_KEY,
-        },
-        body: JSON.stringify({
-          q_organization_name: processedCompanyName,
-          page: 1,
-          per_page: 5, // Increase results to improve matching
-        }),
-      });
+        console.log(`Searching for company: ${processedCompanyName}`);
 
-      if (!companySearchResponse.ok) {
-        const errorText = await companySearchResponse.text();
-        console.error("Apollo API Error:", {
-          status: companySearchResponse.status,
-          statusText: companySearchResponse.statusText,
-          response: errorText
+        const companySearchResponse = await fetch("https://api.apollo.io/v1/mixed_companies/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            "X-Api-Key": process.env.APOLLO_API_KEY,
+          },
+          body: JSON.stringify({
+            q_organization_name: processedCompanyName,
+            page: 1,
+            per_page: 5,
+          }),
         });
-        throw new Error(`Apollo API error: ${companySearchResponse.status} ${companySearchResponse.statusText}`);
+
+        if (!companySearchResponse.ok) {
+          const errorText = await companySearchResponse.text();
+          console.error("Apollo API Error:", {
+            status: companySearchResponse.status,
+            statusText: companySearchResponse.statusText,
+            response: errorText
+          });
+          throw new Error(`Apollo API error: ${companySearchResponse.status} ${companySearchResponse.statusText}`);
+        }
+
+        const companyData = await companySearchResponse.json();
+        console.log("Company search response:", JSON.stringify(companyData, null, 2));
+
+        if (!companyData.organizations?.length) {
+          return res.json({
+            message: `No companies found matching "${companyName}"`,
+            companies: []
+          });
+        }
+
+        const companies = companyData.organizations.map((org: any) => ({
+          name: org.name,
+          domain: org.primary_domain,
+          website_url: org.website_url,
+          logo_url: org.logo_url
+        })).filter((company: any) => company.domain);
+
+        return res.json({
+          message: `Found ${companies.length} matching companies`,
+          companies
+        });
       }
 
-      const companyData = await companySearchResponse.json();
-      console.log("Company search response:", JSON.stringify(companyData, null, 2));
+      // Recruiter Search
+      if (type === "recruiter_search") {
+        if (!domain) {
+          return res.status(400).json({ error: "Domain is required" });
+        }
 
-      if (!companyData.organizations?.length) {
-        return res.json({ 
-          message: `No company found matching "${companyName}"`, 
-          recruiters: [] 
+        console.log(`Searching recruiters for domain: ${domain}`);
+
+        const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+            "X-Api-Key": process.env.APOLLO_API_KEY,
+          },
+          body: JSON.stringify({
+            q_organization_domains: [domain],
+            person_titles: ["recruiter", "talent acquisition", "hr manager", "human resources"],
+            page: 1,
+            per_page: 10,
+          }),
+        });
+
+        if (!recruiterSearchResponse.ok) {
+          const errorText = await recruiterSearchResponse.text();
+          console.error("Apollo API Error (recruiter search):", {
+            status: recruiterSearchResponse.status,
+            statusText: recruiterSearchResponse.statusText,
+            response: errorText
+          });
+          throw new Error(`Apollo API error: ${recruiterSearchResponse.status} ${recruiterSearchResponse.statusText}`);
+        }
+
+        const recruiterData = await recruiterSearchResponse.json();
+        console.log("Recruiter search response:", JSON.stringify(recruiterData, null, 2));
+
+        const recruiters = recruiterData.people?.map((person: any) => ({
+          name: `${person.first_name} ${person.last_name}`,
+          title: person.title,
+          email: person.email,
+          linkedin_url: person.linkedin_url,
+          organization_name: person.organization_name,
+        })) || [];
+
+        return res.json({
+          message: recruiters.length ?
+            `Found ${recruiters.length} recruiters` :
+            `No recruiters found for the selected company`,
+          recruiters
         });
       }
 
-      const domain = companyData.organizations[0].primary_domain;
-      if (!domain) {
-        return res.json({ 
-          message: `Company "${companyName}" found but no domain available`, 
-          recruiters: [] 
-        });
-      }
-
-      console.log(`Found company domain: ${domain}`);
-
-      // Now search for recruiters at this company
-      const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache",
-          "X-Api-Key": process.env.APOLLO_API_KEY,
-        },
-        body: JSON.stringify({
-          q_organization_domains: [domain],
-          person_titles: ["recruiter", "talent acquisition", "hr manager", "human resources"],
-          page: 1,
-          per_page: 10,
-        }),
-      });
-
-      if (!recruiterSearchResponse.ok) {
-        const errorText = await recruiterSearchResponse.text();
-        console.error("Apollo API Error (recruiter search):", {
-          status: recruiterSearchResponse.status,
-          statusText: recruiterSearchResponse.statusText,
-          response: errorText
-        });
-        throw new Error(`Apollo API error: ${recruiterSearchResponse.status} ${recruiterSearchResponse.statusText}`);
-      }
-
-      const recruiterData = await recruiterSearchResponse.json();
-      console.log("Recruiter search response:", JSON.stringify(recruiterData, null, 2));
-
-      const recruiters = recruiterData.people?.map((person: any) => ({
-        name: `${person.first_name} ${person.last_name}`,
-        title: person.title,
-        email: person.email,
-        linkedin_url: person.linkedin_url,
-        organization_name: person.organization_name,
-      })) || [];
-
-      res.json({ 
-        message: recruiters.length ? 
-          `Found ${recruiters.length} recruiters at ${companyName}` : 
-          `No recruiters found at ${companyName}`, 
-        recruiters 
-      });
+      return res.status(400).json({ error: "Invalid search type" });
     } catch (error: any) {
-      console.error("Error searching recruiters:", error);
-      res.status(500).json({ 
-        error: error.message || "Failed to search recruiters",
+      console.error("Error searching:", error);
+      res.status(500).json({
+        error: error.message || "Failed to search",
         details: error.stack
       });
     }
