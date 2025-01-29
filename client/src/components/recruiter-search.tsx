@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Mail, Linkedin } from "lucide-react";
+import { Loader2, Mail, Linkedin, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Recruiter {
@@ -20,6 +20,11 @@ interface Recruiter {
   email?: string;
   linkedin_url?: string;
   organization_name: string;
+}
+
+interface SearchResponse {
+  message: string;
+  recruiters: Recruiter[];
 }
 
 export function RecruiterSearch() {
@@ -31,7 +36,7 @@ export function RecruiterSearch() {
     isLoading,
     error,
     refetch
-  } = useQuery({
+  } = useQuery<SearchResponse>({
     queryKey: ["/api/search-recruiters", companyName],
     queryFn: async () => {
       if (!companyName.trim()) return null;
@@ -41,7 +46,7 @@ export function RecruiterSearch() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ companyName }),
+        body: JSON.stringify({ companyName: companyName.trim() }),
       });
 
       if (!response.ok) {
@@ -84,13 +89,16 @@ export function RecruiterSearch() {
       <h2 className="text-lg font-semibold mb-4">Find Company Recruiters</h2>
 
       <form onSubmit={handleSearch} className="flex gap-4 mb-6">
-        <Input
-          type="text"
-          placeholder="Enter company name..."
-          value={companyName}
-          onChange={(e) => setCompanyName(e.target.value)}
-          className="flex-1"
-        />
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Enter company name..."
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            className="pl-10"
+          />
+        </div>
         <Button type="submit" disabled={isLoading || !companyName.trim()}>
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -162,9 +170,12 @@ export function RecruiterSearch() {
           </Table>
         </div>
       ) : data?.message ? (
-        <p className="text-center text-muted-foreground py-8">
-          {data.message}
-        </p>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">{data.message}</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Try searching with a different company name or check the spelling
+          </p>
+        </div>
       ) : null}
     </Card>
   );

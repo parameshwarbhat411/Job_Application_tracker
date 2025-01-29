@@ -115,6 +115,13 @@ export function registerRoutes(app: Express): Server {
         return res.status(500).json({ error: "Apollo API key is not configured" });
       }
 
+      // Preprocess company name - remove any special characters and extra spaces
+      const processedCompanyName = companyName.trim()
+        .replace(/[^\w\s]/g, '')
+        .replace(/\s+/g, ' ');
+
+      console.log(`Searching for company: ${processedCompanyName}`);
+
       // First, search for the company to get its domain
       const companySearchResponse = await fetch("https://api.apollo.io/v1/mixed_companies/search", {
         method: "POST",
@@ -124,9 +131,9 @@ export function registerRoutes(app: Express): Server {
           "X-Api-Key": process.env.APOLLO_API_KEY,
         },
         body: JSON.stringify({
-          q_organization_name: companyName,
+          q_organization_name: processedCompanyName,
           page: 1,
-          per_page: 1,
+          per_page: 5, // Increase results to improve matching
         }),
       });
 
@@ -141,15 +148,24 @@ export function registerRoutes(app: Express): Server {
       }
 
       const companyData = await companySearchResponse.json();
+      console.log("Company search response:", JSON.stringify(companyData, null, 2));
 
       if (!companyData.organizations?.length) {
-        return res.json({ message: "No company found", recruiters: [] });
+        return res.json({ 
+          message: `No company found matching "${companyName}"`, 
+          recruiters: [] 
+        });
       }
 
       const domain = companyData.organizations[0].primary_domain;
       if (!domain) {
-        return res.json({ message: "Company found but no domain available", recruiters: [] });
+        return res.json({ 
+          message: `Company "${companyName}" found but no domain available`, 
+          recruiters: [] 
+        });
       }
+
+      console.log(`Found company domain: ${domain}`);
 
       // Now search for recruiters at this company
       const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
@@ -161,7 +177,7 @@ export function registerRoutes(app: Express): Server {
         },
         body: JSON.stringify({
           q_organization_domains: [domain],
-          person_titles: ["recruiter", "talent acquisition", "hr manager"],
+          person_titles: ["recruiter", "talent acquisition", "hr manager", "human resources"],
           page: 1,
           per_page: 10,
         }),
@@ -178,6 +194,8 @@ export function registerRoutes(app: Express): Server {
       }
 
       const recruiterData = await recruiterSearchResponse.json();
+      console.log("Recruiter search response:", JSON.stringify(recruiterData, null, 2));
+
       const recruiters = recruiterData.people?.map((person: any) => ({
         name: `${person.first_name} ${person.last_name}`,
         title: person.title,
@@ -186,7 +204,12 @@ export function registerRoutes(app: Express): Server {
         organization_name: person.organization_name,
       })) || [];
 
-      res.json({ message: recruiters.length ? "Recruiters found" : "No recruiters found", recruiters });
+      res.json({ 
+        message: recruiters.length ? 
+          `Found ${recruiters.length} recruiters at ${companyName}` : 
+          `No recruiters found at ${companyName}`, 
+        recruiters 
+      });
     } catch (error: any) {
       console.error("Error searching recruiters:", error);
       res.status(500).json({ 
