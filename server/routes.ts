@@ -179,50 +179,28 @@ export function registerRoutes(app: Express): Server {
 
         console.log(`Searching recruiters for domain: ${domain}`);
 
-        // Use multiple search strategies
+        // Try each search strategy
         const searchStrategies = [
           {
-            person_titles: [
-              "recruiter",
-              "talent acquisition",
-              "recruiting",
-              "technical recruiter"
-            ],
-            seniority: ["manager", "director", "senior"]
+            person_titles: ["recruiter", "talent acquisition", "recruiting", "technical recruiter"],
+            contact_email_status: ["verified"]
           },
           {
-            person_titles: [
-              "hr manager",
-              "human resources",
-              "talent",
-              "sourcer"
-            ],
-            seniority: ["manager", "director", "senior"]
-          },
-          {
-            person_titles: [
-              "recruitment",
-              "hiring",
-              "hr business partner",
-              "people operations"
-            ]
+            person_titles: ["hr", "human resources", "talent", "sourcer"],
+            contact_email_status: ["verified"]
           }
         ];
 
         let allRecruiters: any[] = [];
 
-        // Try each search strategy
         for (const strategy of searchStrategies) {
-          const searchBody: any = {
+          const searchBody = {
             q_organization_domains: [domain],
             person_titles: strategy.person_titles,
+            contact_email_status: strategy.contact_email_status,
             page: 1,
             per_page: 25
           };
-
-          if (strategy.seniority) {
-            searchBody.person_seniorities = strategy.seniority;
-          }
 
           const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
             method: "POST",
