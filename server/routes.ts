@@ -180,6 +180,22 @@ export function registerRoutes(app: Express): Server {
 
         console.log(`Searching recruiters for domain: ${domain}`);
 
+        // Use a more comprehensive search for recruiters
+        const recruiterTitles = [
+          "recruiter",
+          "talent acquisition",
+          "recruiting",
+          "hr manager",
+          "human resources",
+          "talent",
+          "technical recruiter",
+          "sourcer",
+          "recruitment",
+          "hiring",
+          "hr business partner",
+          "people operations"
+        ];
+
         const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
           method: "POST",
           headers: {
@@ -189,9 +205,9 @@ export function registerRoutes(app: Express): Server {
           },
           body: JSON.stringify({
             q_organization_domains: [domain],
-            person_titles: ["recruiter", "talent acquisition", "hr manager", "human resources"],
+            person_titles: recruiterTitles,
             page: 1,
-            per_page: 10,
+            per_page: 25, // Increased from 10 to get more results
           }),
         });
 
@@ -214,12 +230,12 @@ export function registerRoutes(app: Express): Server {
           email: person.email,
           linkedin_url: person.linkedin_url,
           organization_name: person.organization_name,
-        })) || [];
+        })).filter(recruiter => recruiter.email || recruiter.linkedin_url) || [];
 
         return res.json({
           message: recruiters.length ?
             `Found ${recruiters.length} recruiters` :
-            `No recruiters found for the selected company`,
+            `No recruiters found for the selected company. Try another domain or company.`,
           recruiters
         });
       }
