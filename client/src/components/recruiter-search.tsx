@@ -11,13 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Loader2, Mail, Linkedin, Search, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -212,7 +205,11 @@ export function RecruiterSearch() {
                         onClick={() => handleDomainSelect(company.domain)}
                         disabled={selectedDomain === company.domain}
                       >
-                        {selectedDomain === company.domain ? 'Selected' : 'Select'}
+                        {selectedDomain === company.domain ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          'Select'
+                        )}
                       </Button>
                     </TableCell>
                   </TableRow>
