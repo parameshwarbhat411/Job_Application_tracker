@@ -309,67 +309,277 @@ For production deployment:
 3. Start the server using `npm run start`
 4. The application will be available on the configured port (default: 5000)
 
-## Docker Deployment
+# Docker Deployment Guide
 
-The application can be deployed using Docker. Here's how to run it:
+## Prerequisites
 
-1. Build and start the containers:
+Before deploying with Docker, ensure you have:
+- Docker installed (version 20.10.0 or higher)
+- Docker Compose installed (version 2.0.0 or higher)
+- At least 2GB of free RAM
+- 1GB of free disk space
+
+## Quick Start
+
+1. Clone the repository and navigate to it:
+```bash
+git clone <repository-url>
+cd job-tracking-app
+```
+
+2. Create environment files:
+
+Create `.env` in the root directory:
+```env
+# Required for AI features
+OPENAI_API_KEY=your_openai_api_key
+
+# Optional: Override default PostgreSQL settings
+POSTGRES_USER=custom_user
+POSTGRES_PASSWORD=custom_password
+POSTGRES_DB=custom_dbname
+```
+
+3. Build and start the application:
 ```bash
 docker-compose up -d --build
 ```
 
-2. Set up environment variables:
-Create a `.env` file in the root directory with:
-```env
-OPENAI_API_KEY=your_openai_api_key
-```
-
-3. Initialize the database:
+4. Initialize the database:
 ```bash
-# Wait for the database to be ready
 docker-compose exec app npm run db:push
 ```
 
-4. Access the application:
 The application will be available at `http://localhost:5000`
 
-### Docker Commands
+## Container Architecture
 
-- Start containers: `docker-compose up -d`
-- Stop containers: `docker-compose down`
-- View logs: `docker-compose logs -f`
-- Rebuild containers: `docker-compose up -d --build`
-- Remove volumes: `docker-compose down -v`
+The application uses a multi-container setup with Docker Compose:
 
-### Container Architecture
+### Application Container (app)
+- Based on Node.js 20
+- Uses multi-stage build for optimization
+- Runs on port 5000
+- Dependencies:
+  - React 18
+  - Express.js
+  - PostgreSQL client
+  - Other Node.js packages
 
-The Docker setup includes:
-- **App Container**: Node.js application
-  - Production-optimized multi-stage build
-  - Runs on port 5000
-  - Connects to PostgreSQL container
-- **Database Container**: PostgreSQL 16
-  - Persistent volume for data storage
-  - Runs on port 5432
-  - Preconfigured for the application
+### Database Container (db)
+- PostgreSQL 16
+- Persistent volume storage
+- Default port: 5432
+- Automatic database initialization
+- Regular backups (optional)
 
-### Production Considerations
+## Docker Configuration Files
 
-1. **Security**:
-   - Change default database credentials
+### Dockerfile
+Multi-stage build process:
+```dockerfile
+# Build stage
+FROM node:20-slim AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM node:20-slim AS production
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --production
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/db ./db
+COPY --from=builder /app/server ./server
+EXPOSE 5000
+CMD ["npm", "run", "start"]
+```
+
+### docker-compose.yml
+Service definitions:
+```yaml
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      target: production
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/jobtracker
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=jobtracker
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+```
+
+## Common Docker Commands
+
+### Basic Operations
+```bash
+# Start services
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# Rebuild and start
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Execute command in container
+docker-compose exec app /bin/sh
+
+# Remove volumes (caution: deletes data)
+docker-compose down -v
+```
+
+### Maintenance
+```bash
+# Database backup
+docker-compose exec db pg_dump -U postgres jobtracker > backup.sql
+
+# Database restore
+docker-compose exec -T db psql -U postgres jobtracker < backup.sql
+
+# Check container health
+docker-compose ps
+
+# View resource usage
+docker stats
+```
+
+## Production Deployment Considerations
+
+### Security
+1. **Environment Variables**
    - Use Docker secrets for sensitive data
+   - Rotate database credentials regularly
+   - Set strong passwords
+
+2. **Network Security**
    - Configure proper networking rules
+   - Use reverse proxy (e.g., Nginx)
+   - Enable SSL/TLS
 
-2. **Scaling**:
-   - Configure container health checks
-   - Set up proper resource limits
-   - Use container orchestration for multiple instances
+3. **Container Security**
+   - Run containers as non-root
+   - Use official base images
+   - Regular security updates
 
-3. **Monitoring**:
-   - Set up container logging
+### Performance
+1. **Resource Allocation**
+   - Set appropriate memory limits
+   - Configure CPU shares
    - Monitor resource usage
-   - Configure alerting
 
+2. **Database Optimization**
+   - Configure connection pooling
+   - Set up proper indexes
+   - Regular vacuum operations
+
+### Monitoring
+1. **Logging**
+   - Configure log rotation
+   - Set up log aggregation
+   - Monitor application logs
+
+2. **Metrics**
+   - Container metrics
+   - Application metrics
+   - Database metrics
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Container Won't Start**
+   - Check logs: `docker-compose logs app`
+   - Verify environment variables
+   - Check port availability
+
+2. **Database Connection Issues**
+   - Verify DATABASE_URL format
+   - Check if database is ready
+   - Confirm network connectivity
+
+3. **Performance Problems**
+   - Monitor resource usage
+   - Check for memory leaks
+   - Optimize database queries
+
+### Debug Commands
+```bash
+# Check container logs
+docker-compose logs -f app
+
+# Inspect container
+docker inspect <container_id>
+
+# View network status
+docker network ls
+
+# Check volume status
+docker volume ls
+```
+
+## Scaling and Advanced Configuration
+
+### Load Balancing
+```yaml
+# Example docker-compose override for scaling
+services:
+  app:
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+```
+
+### Backup Strategy
+```bash
+# Automated backup script
+#!/bin/bash
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+docker-compose exec -T db pg_dump -U postgres jobtracker > "backup_${TIMESTAMP}.sql"
+```
+
+## Support and Maintenance
+
+For deployment issues:
+1. Check the troubleshooting guide above
+2. Review container logs
+3. Verify environment configuration
+4. Create an issue in the repository
+
+Regular maintenance tasks:
+- Update Docker images
+- Backup database regularly
+- Monitor resource usage
+- Apply security patches
 
 ## Support
 
