@@ -111,12 +111,17 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Company name is required" });
       }
 
+      if (!process.env.APOLLO_API_KEY) {
+        return res.status(500).json({ error: "Apollo API key is not configured" });
+      }
+
       // First, search for the company to get its domain
       const companySearchResponse = await fetch("https://api.apollo.io/v1/mixed_companies/search", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Api-Key": process.env.APOLLO_API_KEY!,
+          "Cache-Control": "no-cache",
+          "Api-Key": process.env.APOLLO_API_KEY,
         },
         body: JSON.stringify({
           q_organization_name: companyName,
@@ -126,22 +131,33 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (!companySearchResponse.ok) {
-        throw new Error("Failed to search company");
+        const errorText = await companySearchResponse.text();
+        console.error("Apollo API Error:", {
+          status: companySearchResponse.status,
+          statusText: companySearchResponse.statusText,
+          response: errorText
+        });
+        throw new Error(`Apollo API error: ${companySearchResponse.status} ${companySearchResponse.statusText}`);
       }
 
       const companyData = await companySearchResponse.json();
-      if (!companyData.organizations?.[0]?.primary_domain) {
-        return res.json([]);
+
+      if (!companyData.organizations?.length) {
+        return res.json({ message: "No company found", recruiters: [] });
       }
 
       const domain = companyData.organizations[0].primary_domain;
+      if (!domain) {
+        return res.json({ message: "Company found but no domain available", recruiters: [] });
+      }
 
       // Now search for recruiters at this company
       const recruiterSearchResponse = await fetch("https://api.apollo.io/v1/mixed_people/search", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Api-Key": process.env.APOLLO_API_KEY!,
+          "Cache-Control": "no-cache",
+          "Api-Key": process.env.APOLLO_API_KEY,
         },
         body: JSON.stringify({
           q_organization_domains: [domain],
@@ -152,7 +168,13 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (!recruiterSearchResponse.ok) {
-        throw new Error("Failed to search recruiters");
+        const errorText = await recruiterSearchResponse.text();
+        console.error("Apollo API Error (recruiter search):", {
+          status: recruiterSearchResponse.status,
+          statusText: recruiterSearchResponse.statusText,
+          response: errorText
+        });
+        throw new Error(`Apollo API error: ${recruiterSearchResponse.status} ${recruiterSearchResponse.statusText}`);
       }
 
       const recruiterData = await recruiterSearchResponse.json();
@@ -164,10 +186,13 @@ export function registerRoutes(app: Express): Server {
         organization_name: person.organization_name,
       })) || [];
 
-      res.json(recruiters);
+      res.json({ message: recruiters.length ? "Recruiters found" : "No recruiters found", recruiters });
     } catch (error: any) {
       console.error("Error searching recruiters:", error);
-      res.status(500).json({ error: error.message || "Failed to search recruiters" });
+      res.status(500).json({ 
+        error: error.message || "Failed to search recruiters",
+        details: error.stack
+      });
     }
   });
 
