@@ -1,4 +1,3 @@
-```tsx
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -56,7 +55,7 @@ export function RecruiterSearch() {
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Find Company Recruiters</h2>
-      
+
       <form onSubmit={handleSearch} className="flex gap-4 mb-6">
         <Input
           type="text"
@@ -125,4 +124,3 @@ export function RecruiterSearch() {
     </Card>
   );
 }
-```
