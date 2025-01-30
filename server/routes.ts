@@ -179,9 +179,18 @@ export function registerRoutes(app: Express): Server {
 
         console.log(`Searching recruiters for domain: ${domain}`);
 
+        // Using the exact same search parameters as the working test code
         const searchBody = {
           q_organization_domains: [domain],
-          person_titles: ["recruiter"],
+          person_titles: [
+            "recruiter",
+            "talent acquisition",
+            "recruiting",
+            "technical recruiter"
+          ],
+          person_locations: ["united states"],
+          organization_locations: ["united states"],
+          contact_email_status: ["verified", "likely to engage"],
           page: 1,
           per_page: 25
         };
@@ -216,7 +225,6 @@ export function registerRoutes(app: Express): Server {
           });
         }
 
-        // Format recruiter data
         const recruiters = recruiterData.people
           .filter((person: any) => person && (person.email || person.linkedin_url))
           .map((person: any) => ({
