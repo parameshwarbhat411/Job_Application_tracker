@@ -267,40 +267,6 @@ npm run start
 
 ## Deployment
 
-### Deploying on Replit
-
-This application is configured for deployment on Replit. The `.replit` configuration includes:
-
-```toml
-modules = ["nodejs-20", "web", "postgresql-16"]
-run = "npm run dev"
-hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
-
-[nix]
-channel = "stable-24_05"
-
-[deployment]
-deploymentTarget = "cloudrun"
-build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
-
-[[ports]]
-localPort = 5000
-externalPort = 80
-```
-
-To deploy on Replit:
-
-1. Fork this repository to your Replit account
-2. Set up the required environment variables in your Replit Secrets:
-   - DATABASE_URL
-   - OPENAI_API_KEY
-   - Firebase configuration variables
-3. The application will automatically:
-   - Install Node.js 20 and PostgreSQL 16
-   - Set up the development environment
-   - Start the development server on port 5000
-
 ### Production Deployment
 
 For production deployment:
