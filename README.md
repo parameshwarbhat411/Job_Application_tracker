@@ -239,41 +239,9 @@ npm run start
 - Verify that PostgreSQL service is running
 - Look for error messages in the terminal
 
-## Development Guidelines
 
-1. **Code Style**
-   - Follow TypeScript best practices
-   - Use ESLint and Prettier configurations
-   - Follow component naming conventions
-   - Keep components small and focused
-
-2. **State Management**
-   - Use React Query for server state
-   - Use local state for UI-only state
-   - Follow the container/presenter pattern
-   - Implement proper error boundaries
-
-3. **Performance**
-   - Implement proper memoization
-   - Use lazy loading for routes
-   - Optimize images and assets
-   - Monitor bundle size
-
-4. **Security**
-   - Never commit .env files
-   - Implement proper authentication checks
-   - Sanitize user inputs
-   - Use HTTPS in production
 
 ## Deployment
-
-### Production Deployment
-
-For production deployment:
-1. Ensure all environment variables are correctly set
-2. Run `npm run build` to create the production build
-3. Start the server using `npm run start`
-4. The application will be available on the configured port (default: 5000)
 
 # Docker Deployment Guide
 
@@ -398,29 +366,6 @@ volumes:
   postgres_data:
 ```
 
-## Common Docker Commands
-
-### Basic Operations
-```bash
-# Start services
-docker-compose up -d
-
-# Stop services
-docker-compose down
-
-# Rebuild and start
-docker-compose up -d --build
-
-# View logs
-docker-compose logs -f
-
-# Execute command in container
-docker-compose exec app /bin/sh
-
-# Remove volumes (caution: deletes data)
-docker-compose down -v
-```
-
 ### Maintenance
 ```bash
 # Database backup
@@ -435,46 +380,6 @@ docker-compose ps
 # View resource usage
 docker stats
 ```
-
-## Production Deployment Considerations
-
-### Security
-1. **Environment Variables**
-   - Use Docker secrets for sensitive data
-   - Rotate database credentials regularly
-   - Set strong passwords
-
-2. **Network Security**
-   - Configure proper networking rules
-   - Use reverse proxy (e.g., Nginx)
-   - Enable SSL/TLS
-
-3. **Container Security**
-   - Run containers as non-root
-   - Use official base images
-   - Regular security updates
-
-### Performance
-1. **Resource Allocation**
-   - Set appropriate memory limits
-   - Configure CPU shares
-   - Monitor resource usage
-
-2. **Database Optimization**
-   - Configure connection pooling
-   - Set up proper indexes
-   - Regular vacuum operations
-
-### Monitoring
-1. **Logging**
-   - Configure log rotation
-   - Set up log aggregation
-   - Monitor application logs
-
-2. **Metrics**
-   - Container metrics
-   - Application metrics
-   - Database metrics
 
 ## Troubleshooting
 
@@ -532,20 +437,6 @@ services:
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 docker-compose exec -T db pg_dump -U postgres jobtracker > "backup_${TIMESTAMP}.sql"
 ```
-
-## Support and Maintenance
-
-For deployment issues:
-1. Check the troubleshooting guide above
-2. Review container logs
-3. Verify environment configuration
-4. Create an issue in the repository
-
-Regular maintenance tasks:
-- Update Docker images
-- Backup database regularly
-- Monitor resource usage
-- Apply security patches
 
 ## Support
 
